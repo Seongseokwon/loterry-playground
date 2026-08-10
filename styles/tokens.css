@@ -1,0 +1,48 @@
+:root {
+  --color-primary:#3182f6;
+  --color-primary-hover:#2272eb;
+  --color-canvas:#ffffff;
+  --color-foreground:#191f28;
+  --color-body:#4e5968;
+  --color-muted:#8b95a1;
+  --color-surface:#f2f4f6;
+  --color-border:#e5e8eb;
+  --color-on-primary:#ffffff;
+  --color-weak-bg:#e8f3ff;
+  --color-weak-fg:#1b64da;
+  --color-danger:#e42939;
+  --ball-yellow:#fbc400;
+  --ball-blue:#69c8f2;
+  --ball-red:#ff7272;
+  --ball-gray:#aaaaaa;
+  --ball-green:#b0d840;
+  --space-xs:4px;
+  --space-sm:6px;
+  --space-md:8px;
+  --space-lg:16px;
+  --space-xl:24px;
+  --space-xxl:32px;
+  --radius-sm:4px;
+  --radius-md:6px;
+  --radius-btn-s:8px;
+  --radius-btn-m:10px;
+  --radius-btn-l:14px;
+  --radius-btn-xl:16px;
+  --radius-btn-web:7px;
+  --font-sans:"Pretendard Variable",Pretendard,-apple-system,BlinkMacSystemFont,system-ui,"Apple SD Gothic Neo",sans-serif;
+}
+
+@theme inline {
+  --color-lotto-primary: var(--color-primary);
+  --color-lotto-primary-hover: var(--color-primary-hover);
+  --color-lotto-canvas: var(--color-canvas);
+  --color-lotto-foreground: var(--color-foreground);
+  --color-lotto-body: var(--color-body);
+  --color-lotto-muted: var(--color-muted);
+  --color-lotto-surface: var(--color-surface);
+  --color-lotto-border: var(--color-border);
+  --color-lotto-weak-bg: var(--color-weak-bg);
+  --color-lotto-weak-fg: var(--color-weak-fg);
+  --color-lotto-danger: var(--color-danger);
+  --font-lotto-sans: var(--font-sans);
+}
