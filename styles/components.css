@@ -3,7 +3,7 @@
 .brand { display: inline-flex; align-items: center; gap: 10px; font-weight: 700; }
 .brand-mark { width: 34px; height: 34px; display: inline-grid; place-items: center; border-radius: 50%; background: var(--color-primary); color: var(--color-on-primary); font-weight: 700; }
 .desktop-nav { display: flex; gap: 28px; color: var(--color-body); font-size: 14px; font-weight: 600; }
-.desktop-nav a:hover { color: var(--color-primary); }
+.desktop-nav a:hover, .desktop-nav a.nav-active { color: var(--color-primary); }
 .mobile-nav { display: none; }
 .site-footer { background: var(--color-surface); border-top: 1px solid var(--color-border); color: var(--color-muted); font-size: 13px; line-height: 21px; }
 .site-footer > div { width: min(100%, 1080px); margin: 0 auto; padding: 32px 20px; }
@@ -96,10 +96,14 @@ button.heat-cell { cursor: pointer; }
 @keyframes sheet-in { from { transform: translateY(100%); } to { transform: none; } }
 
 @media (max-width: 767px) {
+  .site-header { position: static; backdrop-filter: none; }
   .desktop-nav { display: none; }
-  .site-header-inner { height: 60px; }
+  .site-header-inner { height: 56px; }
+  .brand { font-size: 15px; }
+  .brand-mark { width: 32px; height: 32px; }
   .mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); padding: 8px 4px max(10px, env(safe-area-inset-bottom)); background: var(--color-canvas); border-top: 1px solid var(--color-border); }
   .mobile-nav a { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--color-muted); font-size: 16px; }
+  .mobile-nav a.nav-active { color: var(--color-primary); font-weight: 700; }
   .mobile-nav small { font-size: 11px; line-height: 15px; }
   .site-footer { padding-bottom: 76px; }
   .number-grid { gap: 6px; }

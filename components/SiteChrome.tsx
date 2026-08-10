@@ -1,4 +1,7 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 
 const navItems = [
   { href: "/", icon: "⌂", label: "홈" },
@@ -9,6 +12,11 @@ const navItems = [
 ];
 
 export function AppHeader() {
+  const pathname = usePathname();
+
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
+
   return (
     <header className="site-header">
       <div className="site-header-inner">
@@ -17,12 +25,26 @@ export function AppHeader() {
           <span>로또 플레이그라운드</span>
         </Link>
         <nav className="desktop-nav" aria-label="주요 메뉴">
-          {navItems.map((item) => <Link key={item.href} href={item.href}>{item.label}</Link>)}
+          {navItems.map((item) => (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={isActive(item.href) ? "nav-active" : undefined}
+              aria-current={isActive(item.href) ? "page" : undefined}
+            >
+              {item.label}
+            </Link>
+          ))}
         </nav>
       </div>
       <nav className="mobile-nav" aria-label="모바일 주요 메뉴">
         {navItems.map((item) => (
-          <Link key={item.href} href={item.href}>
+          <Link
+            key={item.href}
+            href={item.href}
+            className={isActive(item.href) ? "nav-active" : undefined}
+            aria-current={isActive(item.href) ? "page" : undefined}
+          >
             <span aria-hidden="true">{item.icon}</span>
             <small>{item.label}</small>
           </Link>
