@@ -46,6 +46,26 @@ p { margin: 0; }
 .full { width: 100%; }
 .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
 
+.status-page { min-height: min(680px, calc(100dvh - 260px)); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 28px; }
+.status-mark { display: grid; place-items: center; min-width: 104px; height: 72px; padding: 0 22px; border-radius: 999px; background: var(--color-primary); color: white; font-size: 26px; font-weight: 700; letter-spacing: .04em; }
+.status-mark-error { min-width: 72px; background: var(--color-danger); }
+.status-copy { display: grid; gap: 8px; max-width: 540px; }
+.status-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+.status-actions .product-button { display: inline-flex; align-items: center; justify-content: center; }
+
+.loading-page { padding-top: 80px; }
+.loading-line, .loading-balls span { position: relative; overflow: hidden; background: var(--color-weak-bg); }
+.loading-line::after, .loading-balls span::after { position: absolute; inset: 0; content: ""; background: linear-gradient(100deg, transparent 20%, color-mix(in srgb, white 70%, transparent) 50%, transparent 80%); transform: translateX(-100%); animation: loading-pulse 1.4s ease-in-out infinite; }
+.loading-eyebrow { width: 90px; height: 14px; border-radius: 7px; }
+.loading-title { width: min(360px, 82%); height: 48px; border-radius: 14px; margin-top: 12px; }
+.loading-copy { width: min(460px, 92%); height: 22px; border-radius: 8px; margin-top: 14px; }
+.loading-card { margin-top: 40px; min-height: 240px; display: flex; flex-direction: column; justify-content: center; gap: 28px; }
+.loading-card-title { width: 160px; height: 28px; border-radius: 9px; }
+.loading-balls { display: flex; gap: 8px; flex-wrap: wrap; }
+.loading-balls span { width: 52px; height: 52px; border-radius: 50%; }
+.loading-card-copy { width: min(280px, 70%); height: 18px; border-radius: 8px; }
+@keyframes loading-pulse { to { transform: translateX(100%); } }
+
 @media (max-width: 767px) {
   .page { padding-top: 32px; padding-bottom: 108px; }
   .two-column { grid-template-columns: 1fr; }
@@ -53,6 +73,12 @@ p { margin: 0; }
   .card { padding: 20px; }
   h1, .h1 { font-size: 30px; line-height: 45px; }
   h2, .h2 { font-size: 26px; line-height: 39px; }
+  .status-page { min-height: calc(100dvh - 150px); }
+  .status-actions { width: 100%; }
+  .status-actions .product-button { width: 100%; }
+  .loading-page { padding-top: 48px; }
+  .loading-title { height: 42px; }
+  .loading-balls span { width: 40px; height: 40px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

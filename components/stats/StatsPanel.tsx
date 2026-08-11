@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { useMemo, useState, type CSSProperties } from "react";
 import { StatHeatmap } from "@/components/lotto/StatHeatmap";
 import { ResultSheet } from "@/components/lotto/ResultSheet";
@@ -36,12 +35,12 @@ export function StatsPanel() {
         <div className="section-head"><div><h3>오래 쉬고 있는 번호 Top 10</h3><p className="body-small">최신 제1236회 기준 미출현 회차 수</p></div></div>
         <div className="bar-list">
           {cold.map((stat, index) => (
-            <Link href={`/results/${stat.lastSeenRound}`} className="bar-row" key={stat.number}>
+            <a href={`/results/${stat.lastSeenRound}`} className="bar-row" key={stat.number}>
               <span className="bar-rank">{index + 1}</span>
               <LottoBall number={stat.number} size="sm" />
               <span className="bar-track"><span className="bar-fill" style={{ "--bar-width": `${Math.max(8, (stat.gap / maxGap) * 100)}%` } as CSSProperties} /></span>
               <strong>{stat.gap}회</strong>
-            </Link>
+            </a>
           ))}
         </div>
       </section>

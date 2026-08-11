@@ -35,6 +35,11 @@ const eslintConfig = defineConfig([
         version: "detect",
       },
     },
+    rules: {
+      // Full-page navigation is intentional: the hosted runtime has been less
+      // reliable with client-side route transitions on both desktop and mobile.
+      "@next/next/no-html-link-for-pages": "off",
+    },
   },
 ]);
 
