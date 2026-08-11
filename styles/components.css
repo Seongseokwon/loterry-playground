@@ -103,6 +103,9 @@ button.heat-cell { cursor: pointer; }
   .brand-mark { width: 32px; height: 32px; }
   .mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); padding: 8px 4px max(10px, env(safe-area-inset-bottom)); background: var(--color-canvas); border-top: 1px solid var(--color-border); }
   .mobile-nav a { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--color-muted); font-size: 16px; }
+  .mobile-nav-icon { width: 22px; height: 22px; flex: 0 0 auto; background-position: center; background-repeat: no-repeat; background-size: contain; }
+  .mobile-nav a:not(.nav-active) .mobile-nav-icon { filter: grayscale(1); opacity: .52; }
+  .mobile-nav a.nav-active .mobile-nav-icon { transform: translateY(-1px) scale(1.04); }
   .mobile-nav a.nav-active { color: var(--color-primary); font-weight: 700; }
   .mobile-nav small { font-size: 11px; line-height: 15px; }
   .site-footer { padding-bottom: 76px; }

@@ -4,11 +4,11 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
-  { href: "/", icon: "⌂", label: "홈" },
-  { href: "/results", icon: "◉", label: "당첨번호" },
-  { href: "/draw", icon: "🎲", label: "추첨" },
-  { href: "/stats", icon: "▦", label: "통계" },
-  { href: "/check", icon: "✓", label: "내 번호" },
+  { href: "/", icon: "home", label: "홈" },
+  { href: "/results", icon: "trophy", label: "당첨번호" },
+  { href: "/draw", icon: "dice", label: "추첨" },
+  { href: "/stats", icon: "chart", label: "통계" },
+  { href: "/check", icon: "ticket", label: "내 번호" },
 ];
 
 export function AppHeader() {
@@ -45,7 +45,11 @@ export function AppHeader() {
             className={isActive(item.href) ? "nav-active" : undefined}
             aria-current={isActive(item.href) ? "page" : undefined}
           >
-            <span aria-hidden="true">{item.icon}</span>
+            <span
+              className="mobile-nav-icon"
+              style={{ backgroundImage: `url(/icons/footer-${item.icon}.png)` }}
+              aria-hidden="true"
+            />
             <small>{item.label}</small>
           </a>
         ))}
