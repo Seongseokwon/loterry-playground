@@ -71,11 +71,11 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       <section className="section">
         <div className="section-head"><h3>바로 시작하기</h3><span className="body-small">프리셋</span></div>
         <div className="preset-grid">
-          <PresetCard href="/draw" icon="🎲" title="완전 랜덤" description="조건 없이 가볍게" active={preset === "random"} />
-          <PresetCard href="/draw/hot" icon="🔥" title="핫넘버" description="최근 30회 · 중" active={preset === "hot"} />
-          <PresetCard href="/draw/cold" icon="🧊" title="미출현" description="상위 20개" active={preset === "cold"} />
-          <PresetCard href="/draw/fixed" icon="📌" title="내 번호" description="최대 5개 넣기" active={preset === "fixed"} />
-          <PresetCard href="/draw/carryover" icon="♻️" title="이월수" description="직전 회차 1개" active={preset === "carryover"} />
+          <PresetCard href="/draw" icon="random" title="완전 랜덤" description="조건 없이 가볍게" active={preset === "random"} />
+          <PresetCard href="/draw/hot" icon="hot" title="핫넘버" description="최근 30회 · 중" active={preset === "hot"} />
+          <PresetCard href="/draw/cold" icon="cold" title="미출현" description="상위 20개" active={preset === "cold"} />
+          <PresetCard href="/draw/fixed" icon="fixed" title="내 번호" description="최대 5개 넣기" active={preset === "fixed"} />
+          <PresetCard href="/draw/carryover" icon="carryover" title="이월수" description="직전 회차 1개" active={preset === "carryover"} />
         </div>
       </section>
 

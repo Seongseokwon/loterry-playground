@@ -78,7 +78,8 @@
 
 .preset-card { min-height: 136px; padding: 16px 12px; border: 2px solid transparent; border-radius: var(--radius-btn-l); background: var(--color-surface); display: flex; flex-direction: column; align-items: center; justify-content: center; text-align: center; gap: 5px; }
 .preset-card:hover, .preset-active { border-color: var(--color-primary); background: var(--color-weak-bg); }
-.preset-icon { width: 38px; height: 38px; display: grid; place-items: center; border-radius: var(--radius-btn-m); background: var(--color-canvas); font-size: 20px; }
+.preset-icon { width: 38px; height: 38px; display: grid; place-items: center; overflow: hidden; border-radius: var(--radius-btn-m); background: var(--color-canvas); }
+.preset-illustration { width: 38px; height: 38px; }
 .preset-card strong { font-size: 15px; }
 .preset-card small { color: var(--color-muted); font-size: 12px; line-height: 17px; }
 
