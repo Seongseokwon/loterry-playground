@@ -38,7 +38,7 @@ export default function Home() {
           <span>내 번호 확인하기 →</span>
         </Link>
         <Link href="/draw" className="quick-card card">
-          <span className="quick-icon illustration-icon" style={{ backgroundImage: "url(/icons/preset-random.png)" }} aria-hidden="true" />
+          <img className="quick-icon illustration-image" src="/icons/preset-random.png" alt="" aria-hidden="true" />
           <h3>다음 회차 번호 뽑기</h3>
           <p>조건 없이 시작하고, 원할 때만 조건을 더해요.</p>
           <span>번호 골라보기 →</span>
@@ -48,8 +48,8 @@ export default function Home() {
       <section className="section">
         <div className="section-head"><h2>이번 주 하이라이트</h2><Link className="text-link" href="/stats">전체 통계 →</Link></div>
         <div className="highlight-grid">
-          <div className="card"><div className="highlight-title"><span className="highlight-illustration" style={{ backgroundImage: "url(/icons/preset-hot.png)" }} aria-hidden="true" /><div><h3>최근 자주 나온 번호</h3><p className="body-small">최근 10회 출현 횟수</p></div></div><div className="highlight-numbers">{hot.map((stat) => <div key={stat.number}><LottoBall number={stat.number} /><strong>{stat.countRecent10}회</strong></div>)}</div></div>
-          <div className="card"><div className="highlight-title"><span className="highlight-illustration" style={{ backgroundImage: "url(/icons/preset-cold.png)" }} aria-hidden="true" /><div><h3>오래 쉬고 있는 번호</h3><p className="body-small">최신 회차 기준</p></div></div><div className="highlight-numbers">{cold.map((stat) => <div key={stat.number}><LottoBall number={stat.number} /><strong>{stat.gap}회</strong></div>)}</div></div>
+          <div className="card"><div className="highlight-title"><img className="highlight-illustration" src="/icons/preset-hot.png" alt="" aria-hidden="true" /><div><h3>최근 자주 나온 번호</h3><p className="body-small">최근 10회 출현 횟수</p></div></div><div className="highlight-numbers">{hot.map((stat) => <div key={stat.number}><LottoBall number={stat.number} /><strong>{stat.countRecent10}회</strong></div>)}</div></div>
+          <div className="card"><div className="highlight-title"><img className="highlight-illustration" src="/icons/preset-cold.png" alt="" aria-hidden="true" /><div><h3>오래 쉬고 있는 번호</h3><p className="body-small">최신 회차 기준</p></div></div><div className="highlight-numbers">{cold.map((stat) => <div key={stat.number}><LottoBall number={stat.number} /><strong>{stat.gap}회</strong></div>)}</div></div>
         </div>
       </section>
     </div>

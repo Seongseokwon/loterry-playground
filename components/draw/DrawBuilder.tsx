@@ -89,11 +89,11 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       <section className="section">
         <div className="section-head"><h3>직접 조건 만들기</h3><span className="body-small">여러 개를 함께 켤 수 있어요</span></div>
         <div className="chip-wrap">
-          <ConditionChip label="📌 넣을 번호" value={fixed.length ? fixed.join(", ") : "번호 고르기"} checked={editing === "fixed" || fixed.length > 0} onChange={(checked) => { setEditing(checked ? "fixed" : null); if (!checked) setFixed([]); }} />
-          <ConditionChip label="🚫 뺄 번호" value={excluded.length ? `${excluded.length}개` : "번호 고르기"} checked={editing === "excluded" || excluded.length > 0} onChange={(checked) => { setEditing(checked ? "excluded" : null); if (!checked) setExcluded([]); }} />
-          <ConditionChip label="🔥 핫넘버" value="최근 30회 · 중" checked={hot} onChange={setHot} />
-          <ConditionChip label="🧊 미출현" value="상위 20개" checked={cold} onChange={setCold} />
-          <ConditionChip label="♻️ 이월수" value="1개" checked={carryover} onChange={setCarryover} />
+          <ConditionChip icon="pin" label="넣을 번호" value={fixed.length ? fixed.join(", ") : "번호 고르기"} checked={editing === "fixed" || fixed.length > 0} onChange={(checked) => { setEditing(checked ? "fixed" : null); if (!checked) setFixed([]); }} />
+          <ConditionChip icon="exclude" label="뺄 번호" value={excluded.length ? `${excluded.length}개` : "번호 고르기"} checked={editing === "excluded" || excluded.length > 0} onChange={(checked) => { setEditing(checked ? "excluded" : null); if (!checked) setExcluded([]); }} />
+          <ConditionChip icon="hot" label="핫넘버" value="최근 30회 · 중" checked={hot} onChange={setHot} />
+          <ConditionChip icon="cold" label="미출현" value="상위 20개" checked={cold} onChange={setCold} />
+          <ConditionChip icon="carryover" label="이월수" value="1개" checked={carryover} onChange={setCarryover} />
         </div>
 
         {editing && (
@@ -114,9 +114,9 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       <section className="section filter-card card">
         <div><h4>조합 다듬기</h4><p className="body-small">기본 필터는 언제든 끌 수 있어요.</p></div>
         <div className="chip-wrap">
-          <ConditionChip label="⚙️ 3연속 번호 제외" checked={noConsecutive3} onChange={setNoConsecutive3} />
-          <ConditionChip label="⚙️ 과거 1등 조합 제외" checked={noPastJackpot} onChange={setNoPastJackpot} />
-          <ConditionChip label="⚙️ 같은 끝수 3개 제외" checked={noSameTail3} onChange={setNoSameTail3} />
+          <ConditionChip icon="gear" label="3연속 번호 제외" checked={noConsecutive3} onChange={setNoConsecutive3} />
+          <ConditionChip icon="gear" label="과거 1등 조합 제외" checked={noPastJackpot} onChange={setNoPastJackpot} />
+          <ConditionChip icon="gear" label="같은 끝수 3개 제외" checked={noSameTail3} onChange={setNoSameTail3} />
         </div>
         <fieldset className="game-count">
           <legend>몇 게임을 뽑을까요?</legend>

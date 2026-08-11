@@ -12,10 +12,10 @@
 .quick-grid, .highlight-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .quick-card { min-height: 220px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 10px; }
 .quick-card > span:last-child { margin-top: 8px; color: var(--color-weak-fg); font-weight: 600; }
-.quick-icon { width: 48px; height: 48px; }
-.illustration-icon, .highlight-illustration, .preset-illustration { display: block; background-position: center; background-repeat: no-repeat; background-size: contain; }
+.quick-icon { width: 48px; height: 48px; object-fit: contain; }
+.illustration-image, .highlight-illustration, .preset-illustration { display: block; object-fit: contain; }
 .highlight-title { display: flex; align-items: center; gap: 12px; margin-bottom: 24px; }
-.highlight-title > span { width: 42px; height: 42px; border-radius: var(--radius-btn-m); background-color: var(--color-canvas); }
+.highlight-title > img { width: 42px; height: 42px; border-radius: var(--radius-btn-m); background-color: var(--color-canvas); object-fit: contain; }
 .highlight-numbers { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
 .highlight-numbers > div { display: flex; align-items: center; gap: 8px; color: var(--color-body); font-size: 14px; }
 
@@ -62,7 +62,7 @@
 .round-select select { height: 48px; padding: 0 12px; border: 1px solid var(--color-border); border-radius: var(--radius-btn-m); background: var(--color-canvas); }
 .check-result { position: sticky; top: 92px; min-height: 300px; }
 .empty-result { min-height: 250px; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; gap: 8px; }
-.empty-result-icon { width: 72px; height: 72px; display: block; background: url(/icons/footer-ticket.png) center / contain no-repeat; }
+.empty-result-icon { width: 72px; height: 72px; display: block; object-fit: contain; }
 .result-title { display: flex; flex-direction: column; align-items: flex-start; gap: 6px; }
 
 .stats-card { display: flex; flex-direction: column; align-items: center; gap: 24px; }

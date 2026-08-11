@@ -45,11 +45,7 @@ export function AppHeader() {
             className={isActive(item.href) ? "nav-active" : undefined}
             aria-current={isActive(item.href) ? "page" : undefined}
           >
-            <span
-              className="mobile-nav-icon"
-              style={{ backgroundImage: `url(/icons/footer-${item.icon}.png)` }}
-              aria-hidden="true"
-            />
+            <img className="mobile-nav-icon" src={`/icons/footer-${item.icon}.png`} alt="" aria-hidden="true" />
             <small>{item.label}</small>
           </a>
         ))}

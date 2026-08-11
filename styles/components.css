@@ -72,7 +72,8 @@
 .number-disabled, .number-cell:disabled { color: var(--color-muted); background: var(--color-surface); cursor: not-allowed; }
 .cell-check { position: absolute; top: -4px; right: -4px; width: 16px; height: 16px; display: grid; place-items: center; border: 2px solid var(--color-canvas); border-radius: 50%; background: var(--color-weak-fg); color: var(--color-on-primary); font-size: 9px; }
 
-.condition-chip { min-height: 38px; padding: 0 14px; border: 2px solid transparent; border-radius: 999px; background: var(--color-surface); color: var(--color-body); cursor: pointer; font-size: 14px; font-weight: 600; }
+.condition-chip { min-height: 38px; display: inline-flex; align-items: center; gap: 6px; padding: 0 14px; border: 2px solid transparent; border-radius: 999px; background: var(--color-surface); color: var(--color-body); cursor: pointer; font-size: 14px; font-weight: 600; }
+.condition-icon { width: 20px; height: 20px; flex: 0 0 auto; object-fit: contain; }
 .condition-chip small { margin-left: 6px; font-size: 12px; opacity: .8; }
 .condition-on { background: var(--color-weak-bg); color: var(--color-weak-fg); border-color: color-mix(in srgb, var(--color-weak-fg) 22%, transparent); }
 
@@ -104,7 +105,7 @@ button.heat-cell { cursor: pointer; }
   .brand-mark { width: 32px; height: 32px; }
   .mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); padding: 8px 4px max(10px, env(safe-area-inset-bottom)); background: var(--color-canvas); border-top: 1px solid var(--color-border); }
   .mobile-nav a { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--color-muted); font-size: 16px; }
-  .mobile-nav-icon { width: 22px; height: 22px; flex: 0 0 auto; background-position: center; background-repeat: no-repeat; background-size: contain; }
+  .mobile-nav-icon { width: 22px; height: 22px; flex: 0 0 auto; object-fit: contain; }
   .mobile-nav a:not(.nav-active) .mobile-nav-icon { filter: grayscale(1); opacity: .52; }
   .mobile-nav a.nav-active .mobile-nav-icon { transform: translateY(-1px) scale(1.04); }
   .mobile-nav a.nav-active { color: var(--color-primary); font-weight: 700; }

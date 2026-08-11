@@ -37,7 +37,7 @@ export function CheckPanel() {
 
       <aside className={`check-result card ${result && result.rank !== "낙첨" ? "card-weak" : ""}`} aria-live="polite">
         {!result ? (
-          <div className="empty-result"><span className="empty-result-icon" aria-hidden="true" /><h3>6개를 고르면 바로 확인해요</h3><p className="body-small">선택한 회차의 당첨번호와 안전하게 비교합니다.</p></div>
+          <div className="empty-result"><img className="empty-result-icon" src="/icons/footer-ticket.png" alt="" aria-hidden="true" /><h3>6개를 고르면 바로 확인해요</h3><p className="body-small">선택한 회차의 당첨번호와 안전하게 비교합니다.</p></div>
         ) : (
           <div className="stack">
             <div className="result-title">
