@@ -1,8 +1,8 @@
 import { describe, expect, it } from "vitest";
+import { lottoDraws } from "@/data/draws";
 import { judgeRank } from "@/lib/rank";
-import { mockDraws } from "@/mocks/draws";
 
-const draw = mockDraws.find((item) => item.round === 1236)!;
+const draw = lottoDraws.find((item) => item.round === 1236)!;
 
 describe("judgeRank", () => {
   it.each([

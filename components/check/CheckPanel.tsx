@@ -5,14 +5,14 @@ import { LottoBall } from "@/components/lotto/LottoBall";
 import { NumberGrid } from "@/components/lotto/NumberGrid";
 import { ProductButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
+import { lottoDraws } from "@/data/draws";
 import { judgeRank, type RankResult } from "@/lib/rank";
-import { mockDraws } from "@/mocks/draws";
 
 export function CheckPanel() {
   const [selected, setSelected] = useState<number[]>([]);
-  const [round, setRound] = useState(1236);
+  const [round, setRound] = useState(lottoDraws[0].round);
   const [result, setResult] = useState<RankResult | null>(null);
-  const draw = useMemo(() => mockDraws.find((item) => item.round === round) ?? mockDraws[0], [round]);
+  const draw = useMemo(() => lottoDraws.find((item) => item.round === round) ?? lottoDraws[0], [round]);
   const toggle = (number: number) => {
     setResult(null);
     setSelected((current) => current.includes(number) ? current.filter((item) => item !== number) : current.length < 6 ? [...current, number].sort((a, b) => a - b) : current);
@@ -22,7 +22,7 @@ export function CheckPanel() {
       <section className="card stack">
         <label className="round-select">확인할 회차
           <select value={round} onChange={(event) => { setRound(Number(event.target.value)); setResult(null); }}>
-            {mockDraws.map((item) => <option value={item.round} key={item.round}>제{item.round}회 · {item.date}</option>)}
+            {lottoDraws.map((item) => <option value={item.round} key={item.round}>제{item.round}회 · {item.date}</option>)}
           </select>
         </label>
         <div>

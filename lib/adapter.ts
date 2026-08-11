@@ -1,6 +1,6 @@
 import type { Draw, LottoNumber } from "./types";
 
-type MockRawDraw = {
+type RawDraw = {
   round?: unknown;
   date?: unknown;
   numbers?: unknown;
@@ -16,7 +16,7 @@ function isLottoNumber(value: unknown): value is LottoNumber {
 
 export function toDraw(raw: unknown): Draw {
   if (!raw || typeof raw !== "object") throw new TypeError("회차 데이터가 객체가 아닙니다.");
-  const value = raw as MockRawDraw;
+  const value = raw as RawDraw;
   if (!Number.isInteger(value.round) || Number(value.round) < 1) throw new TypeError("회차 번호가 올바르지 않습니다.");
   if (typeof value.date !== "string" || !/^\d{4}-\d{2}-\d{2}$/.test(value.date)) throw new TypeError("추첨일이 올바르지 않습니다.");
   if (!Array.isArray(value.numbers) || value.numbers.length !== 6 || !value.numbers.every(isLottoNumber)) throw new TypeError("당첨번호는 1~45 정수 6개여야 합니다.");

@@ -8,10 +8,10 @@ import { LottoBall } from "@/components/lotto/LottoBall";
 import { NumberGrid } from "@/components/lotto/NumberGrid";
 import { PresetCard } from "@/components/lotto/PresetCard";
 import { ResultSheet } from "@/components/lotto/ResultSheet";
+import { lottoDraws } from "@/data/draws";
 import { drawNumbers } from "@/lib/draw-engine";
 import { aggregateNumberStats } from "@/lib/stats";
 import type { DrawRequest, DrawResult } from "@/lib/types";
-import { mockDraws } from "@/mocks/draws";
 
 type Preset = "random" | "hot" | "cold" | "fixed" | "carryover";
 
@@ -36,7 +36,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [games, setGames] = useState<1 | 5>(1);
   const [result, setResult] = useState<DrawResult | null>(null);
   const [saved, setSaved] = useState(false);
-  const stats = useMemo(() => aggregateNumberStats(mockDraws), []);
+  const stats = useMemo(() => aggregateNumberStats(lottoDraws), []);
 
   const request = (): DrawRequest => ({
     conditions: {
@@ -53,7 +53,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
 
   const runDraw = () => {
     setSaved(false);
-    setResult(drawNumbers(request(), { stats, latestDraw: mockDraws[0], pastDraws: mockDraws }));
+    setResult(drawNumbers(request(), { stats, latestDraw: lottoDraws[0], pastDraws: lottoDraws }));
   };
 
   const toggleFixed = (number: number) => setFixed((current) => current.includes(number) ? current.filter((item) => item !== number) : current.length < 5 ? [...current, number].sort((a, b) => a - b) : current);

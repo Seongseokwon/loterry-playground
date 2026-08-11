@@ -5,14 +5,14 @@ import { StatHeatmap } from "@/components/lotto/StatHeatmap";
 import { ResultSheet } from "@/components/lotto/ResultSheet";
 import { LottoBall } from "@/components/lotto/LottoBall";
 import { Badge } from "@/components/ui/Badge";
+import { lottoDraws } from "@/data/draws";
 import { aggregateNumberStats } from "@/lib/stats";
 import type { NumberStat } from "@/lib/types";
-import { mockDraws } from "@/mocks/draws";
 
 type Period = "all" | "100" | "50" | "10";
 
 export function StatsPanel() {
-  const stats = useMemo(() => aggregateNumberStats(mockDraws), []);
+  const stats = useMemo(() => aggregateNumberStats(lottoDraws), []);
   const [period, setPeriod] = useState<Period>("all");
   const [selected, setSelected] = useState<NumberStat | null>(null);
   const key = period === "10" ? "countRecent10" : period === "50" ? "countRecent50" : period === "100" ? "countRecent100" : "totalCount";
@@ -32,7 +32,7 @@ export function StatsPanel() {
       </section>
 
       <section className="section card">
-        <div className="section-head"><div><h3>오래 쉬고 있는 번호 Top 10</h3><p className="body-small">최신 제1236회 기준 미출현 회차 수</p></div></div>
+        <div className="section-head"><div><h3>오래 쉬고 있는 번호 Top 10</h3><p className="body-small">최신 제{lottoDraws[0].round}회 기준 미출현 회차 수</p></div></div>
         <div className="bar-list">
           {cold.map((stat, index) => (
             <a href={`/results/${stat.lastSeenRound}`} className="bar-row" key={stat.number}>
@@ -50,7 +50,7 @@ export function StatsPanel() {
           <div className="stack">
             <div className="row"><LottoBall number={selected.number} size="lg" /><Badge>최근 {selected.gap}회 미출현</Badge></div>
             <dl className="stat-detail">
-              <div><dt>104회 누적</dt><dd>{selected.totalCount}회</dd></div>
+              <div><dt>전체 회차 누적</dt><dd>{selected.totalCount}회</dd></div>
               <div><dt>최근 출현</dt><dd>제{selected.lastSeenRound}회</dd></div>
               <div><dt>최근 10회</dt><dd>{selected.countRecent10}회</dd></div>
               <div><dt>최근 50회</dt><dd>{selected.countRecent50}회</dd></div>

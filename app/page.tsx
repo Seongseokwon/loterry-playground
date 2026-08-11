@@ -1,13 +1,13 @@
 import { BallRow } from "@/components/lotto/BallRow";
 import { LottoBall } from "@/components/lotto/LottoBall";
 import { Badge } from "@/components/ui/Badge";
+import { lottoDraws } from "@/data/draws";
 import { aggregateNumberStats } from "@/lib/stats";
 import { formatKoreanDate, formatWon } from "@/lib/format";
-import { mockDraws } from "@/mocks/draws";
 
 export default function Home() {
-  const latest = mockDraws[0];
-  const stats = aggregateNumberStats(mockDraws);
+  const latest = lottoDraws[0];
+  const stats = aggregateNumberStats(lottoDraws);
   const hot = [...stats].sort((a, b) => b.countRecent10 - a.countRecent10).slice(0, 3);
   const cold = [...stats].sort((a, b) => b.gap - a.gap).slice(0, 3);
   return (

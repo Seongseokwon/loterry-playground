@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
+import { lottoDraws } from "@/data/draws";
 import { drawNumbers } from "@/lib/draw-engine";
 import { aggregateNumberStats } from "@/lib/stats";
 import type { DrawRequest } from "@/lib/types";
-import { mockDraws } from "@/mocks/draws";
 
-const context = { stats: aggregateNumberStats(mockDraws), latestDraw: mockDraws[0], pastDraws: mockDraws };
+const context = { stats: aggregateNumberStats(lottoDraws), latestDraw: lottoDraws[0], pastDraws: lottoDraws };
 const base: DrawRequest = { conditions: {}, filters: { noConsecutive3: true, noPastJackpot: true, noSameTail3: false }, games: 1 };
 
 describe("drawNumbers", () => {

@@ -2,10 +2,10 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { BallRow } from "@/components/lotto/BallRow";
 import { Badge } from "@/components/ui/Badge";
+import { lottoDraws } from "@/data/draws";
 import { formatKoreanDate, formatWon } from "@/lib/format";
-import { mockDraws } from "@/mocks/draws";
 
-export function generateStaticParams() { return mockDraws.map((draw) => ({ round: String(draw.round) })); }
+export function generateStaticParams() { return lottoDraws.map((draw) => ({ round: String(draw.round) })); }
 
 export async function generateMetadata({ params }: { params: Promise<{ round: string }> }): Promise<Metadata> {
   const { round } = await params;
@@ -14,11 +14,11 @@ export async function generateMetadata({ params }: { params: Promise<{ round: st
 
 export default async function ResultDetailPage({ params }: { params: Promise<{ round: string }> }) {
   const { round } = await params;
-  const draw = mockDraws.find((item) => item.round === Number(round));
+  const draw = lottoDraws.find((item) => item.round === Number(round));
   if (!draw) notFound();
-  const index = mockDraws.findIndex((item) => item.round === draw.round);
-  const newer = index > 0 ? mockDraws[index - 1] : null;
-  const older = index < mockDraws.length - 1 ? mockDraws[index + 1] : null;
+  const index = lottoDraws.findIndex((item) => item.round === draw.round);
+  const newer = index > 0 ? lottoDraws[index - 1] : null;
+  const older = index < lottoDraws.length - 1 ? lottoDraws[index + 1] : null;
   return (
     <div className="page page-narrow">
       <header className="page-header"><p className="eyebrow">{formatKoreanDate(draw.date)}</p><h1>제{draw.round}회 당첨번호</h1></header>
@@ -36,7 +36,7 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ r
         {newer ? <a href={`/results/${newer.round}`}>제{newer.round}회 →</a> : <span />}
       </div>
       <section className="official-note card card-weak">
-        <div><strong>결과는 공식 사이트에서도 확인해 주세요</strong><p className="body-small">이 페이지는 Phase 1 Mock 데이터를 사용합니다.</p></div>
+        <div><strong>결과는 공식 사이트에서도 확인해 주세요</strong><p className="body-small">동행복권 공개 회차 데이터를 수집해 제공합니다.</p></div>
         <a className="text-link" href="https://www.dhlottery.co.kr/" target="_blank" rel="noreferrer">공식 확인: 동행복권 ↗</a>
       </section>
     </div>
