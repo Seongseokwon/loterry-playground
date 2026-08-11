@@ -39,7 +39,7 @@ export function AppHeader() {
       </div>
       <nav className="mobile-nav" aria-label="모바일 주요 메뉴">
         {navItems.map((item) => (
-          <Link
+          <a
             key={item.href}
             href={item.href}
             className={isActive(item.href) ? "nav-active" : undefined}
@@ -47,7 +47,7 @@ export function AppHeader() {
           >
             <span aria-hidden="true">{item.icon}</span>
             <small>{item.label}</small>
-          </Link>
+          </a>
         ))}
       </nav>
     </header>
