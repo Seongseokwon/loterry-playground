@@ -42,6 +42,11 @@ yarn-error.log*
 /outputs/
 /work/
 
+# lotto data collector runtime files
+/data/collection-state.json
+/data/collector.log
+/data/*.tmp
+
 # local product specifications (kept in the workspace, not deployed)
 /FE-에이전트-프롬프트.md
 /디자인가이드-프리뷰.html
