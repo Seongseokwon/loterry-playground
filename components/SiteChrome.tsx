@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
 
 const navItems = [
@@ -20,20 +19,20 @@ export function AppHeader() {
   return (
     <header className="site-header">
       <div className="site-header-inner">
-        <Link className="brand" href="/" aria-label="로또 플레이그라운드 홈">
+        <a className="brand" href="/" aria-label="로또 플레이그라운드 홈">
           <span className="brand-mark" aria-hidden="true">6</span>
           <span>로또 플레이그라운드</span>
-        </Link>
+        </a>
         <nav className="desktop-nav" aria-label="주요 메뉴">
           {navItems.map((item) => (
-            <Link
+            <a
               key={item.href}
               href={item.href}
               className={isActive(item.href) ? "nav-active" : undefined}
               aria-current={isActive(item.href) ? "page" : undefined}
             >
               {item.label}
-            </Link>
+            </a>
           ))}
         </nav>
       </div>
