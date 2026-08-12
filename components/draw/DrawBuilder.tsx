@@ -15,7 +15,7 @@ import { aggregateNumberStats } from "@/lib/stats";
 import { saveSavedSet, type SavedSet, type SavedSetInput, type SavedSetNumbers } from "@/lib/storage";
 import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 
-type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair";
+type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair" | "birthday";
 type SumMode = "none" | "narrow" | "wide" | "custom";
 
 const COUNT_OPTIONS = [0, 1, 2, 3, 4, 5, 6] as const;
@@ -27,6 +27,7 @@ const presetCopy: Record<Preset, { title: string; copy: string }> = {
   fixed: { title: "내 번호 넣기", copy: "꼭 넣고 싶은 번호를 최대 5개까지 정하고, 남은 자리는 안전한 난수로 채워요. 넣을 번호와 뺄 번호가 겹치면 넣을 번호를 우선해요." },
   carryover: { title: "지난 회차 번호 섞기", copy: "직전 회차 당첨번호 중 하나를 반드시 포함하고 나머지를 새로 골라요. 같은 숫자가 연속 회차에 나오는 현상을 재미있게 살펴보는 조건이에요." },
   pair: { title: "궁합수", copy: "과거 회차에서 함께 나온 횟수가 많은 번호를 참고해요. 기준 번호는 조합에 포함하고, 상위 K개 궁합수에 등장한 동반 번호에 가중치를 더해요." },
+  birthday: { title: "기념일 번호", copy: "입력한 날짜의 일을 1~31 번호로 바꾸고, 부족한 자리는 1~31 안에서 랜덤으로 채워요. 날짜를 번호로 바꾸는 방식에는 분명한 편향이 있어요." },
 };
 
 export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
@@ -39,6 +40,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [pairBase, setPairBase] = useState<number[]>([]);
   const [pairTopK, setPairTopK] = useState(20);
   const [pairEditing, setPairEditing] = useState(false);
+  const [birthdayDates, setBirthdayDates] = useState<string[]>([""]);
   const [noConsecutive3, setNoConsecutive3] = useState(true);
   const [noPastJackpot, setNoPastJackpot] = useState(true);
   const [noSameTail3, setNoSameTail3] = useState(false);
@@ -71,6 +73,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       cold: cold ? { poolSize: 20 } : undefined,
       carryover: carryover ? { count: 1 } : undefined,
       pair: preset === "pair" ? { base: pairBase, topK: pairTopK } : undefined,
+      birthday: preset === "birthday" ? { dates: birthdayDates.filter(Boolean) } : undefined,
       oddCount,
       lowCount,
       sumRange,
@@ -157,6 +160,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           <PresetCard href="/draw/fixed" icon="fixed" title="내 번호" description="최대 5개 넣기" active={preset === "fixed"} />
           <PresetCard href="/draw/carryover" icon="carryover" title="이월수" description="직전 회차 1개" active={preset === "carryover"} />
           <PresetCard href="/draw/pair" icon="hot" title="궁합수" description="동시출현 Top K" active={preset === "pair"} />
+          <PresetCard href="/draw/birthday" icon="fixed" title="기념일" description="날짜를 번호로" active={preset === "birthday"} />
         </div>
       </section>
 
@@ -178,6 +182,29 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
             </div>
           </fieldset>
           <p className="body-small pair-notice">궁합수는 과거에 함께 나온 횟수일 뿐이에요. 각 추첨은 독립적으로 시행되므로 다음 당첨 확률을 높이지 않습니다.</p>
+        </section>
+      )}
+
+      {preset === "birthday" && (
+        <section className="section card birthday-builder">
+          <div className="section-head">
+            <div><h3>기념일 입력</h3><p className="body-small">날짜의 일(day)만 번호가 돼요. 최대 6개까지 입력할 수 있어요.</p></div>
+            <span className="body-small">{birthdayDates.filter(Boolean).length}/6개</span>
+          </div>
+          <div className="birthday-date-list">
+            {birthdayDates.map((date, index) => (
+              <div className="birthday-date-row" key={index}>
+                <label className="sr-only" htmlFor={`birthday-date-${index}`}>기념일 {index + 1}</label>
+                <input id={`birthday-date-${index}`} className="birthday-date-input" type="date" value={date} onChange={(event) => setBirthdayDates((current) => current.map((item, itemIndex) => itemIndex === index ? event.currentTarget.value : item))} />
+                {birthdayDates.length > 1 && <ProductButton size="small" tone="weak" aria-label={`기념일 ${index + 1} 삭제`} onClick={() => setBirthdayDates((current) => current.filter((_, itemIndex) => itemIndex !== index))}>삭제</ProductButton>}
+              </div>
+            ))}
+          </div>
+          <ProductButton size="small" tone="weak" disabled={birthdayDates.length >= 6} onClick={() => setBirthdayDates((current) => [...current, ""])}>날짜 추가</ProductButton>
+          <div className="birthday-notice">
+            <p><strong>편향 안내</strong></p>
+            <p className="body-small">날짜의 일은 1~31에만 해당하므로 32~45는 이 방식으로 선택되지 않아요. 생일 번호는 선택자가 많아 당첨 시 당첨금이 나뉠 가능성도 커질 수 있어요.</p>
+          </div>
         </section>
       )}
 

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { lottoDraws } from "@/data/draws";
-import { drawNumbers } from "@/lib/draw-engine";
+import { drawNumbers, mapBirthdayDates } from "@/lib/draw-engine";
 import { aggregateNumberStats, pairStats } from "@/lib/stats";
 import type { DrawRequest } from "@/lib/types";
 
@@ -71,6 +71,15 @@ describe("drawNumbers", () => {
     expect(result.games).toHaveLength(1);
     expect(result.games[0]).toContain(7);
     expect(result.appliedChips).toContain("궁합수 · 기준 7 · 상위 20개");
+  });
+
+  it("기념일은 날짜의 일을 1~31로 매핑하고 부족분도 1~31에서 채운다", () => {
+    expect(mapBirthdayDates(["2020-02-29", "2021/12/04", "invalid", "2022-02-29"])).toEqual([4, 29]);
+    const result = drawNumbers({ conditions: { birthday: { dates: ["2020-02-29"] } }, filters: { noConsecutive3: false, noPastJackpot: false, noSameTail3: false }, games: 1 }, context);
+    expect(result.games).toHaveLength(1);
+    expect(result.games[0]).toContain(29);
+    expect(result.games[0].every((number) => number <= 31)).toBe(true);
+    expect(result.appliedChips).toContain("기념일 · 1개");
   });
 
   it("고급 조건 충돌 시 완화 안내를 제안한다", () => {

@@ -7,6 +7,11 @@ export const HOT_WEIGHT = { low: 1.3, mid: 2, high: 3 } as const;
 const MAX_ATTEMPTS = 5000;
 const ALL_NUMBERS = Array.from({ length: 45 }, (_, index) => index + 1);
 
+/** Convert birthday strings to their day-of-month lotto numbers (1~31). */
+export function mapBirthdayDates(dates: string[]): LottoNumber[] {
+  return [...new Set(dates.map((date) => Number(date.trim().split(/[-/]/).at(-1))).filter((day) => Number.isInteger(day) && day >= 1 && day <= 31))].sort((a, b) => a - b);
+}
+
 function statValue(stat: NumberStat, window: 10 | 30 | 50 | 0) {
   if (window === 10) return stat.countRecent10;
   if (window === 50) return stat.countRecent50;
@@ -56,6 +61,7 @@ function chipLabels(request: DrawRequest) {
   if (conditions.cold) chips.push(`미출현 · 상위 ${conditions.cold.poolSize}개`);
   if (conditions.carryover) chips.push(`이월수 ${conditions.carryover.count}개`);
   if (conditions.pair) chips.push(`궁합수${conditions.pair.base.length ? ` · 기준 ${conditions.pair.base.join(", ")}` : ""} · 상위 ${conditions.pair.topK}개`);
+  if (conditions.birthday) chips.push(`기념일 · ${conditions.birthday.dates.length}개`);
   if (conditions.oddCount !== undefined) chips.push(`홀짝 ${conditions.oddCount}:${6 - conditions.oddCount}`);
   if (conditions.lowCount !== undefined) chips.push(`고저 ${conditions.lowCount}:${6 - conditions.lowCount}`);
   if (conditions.sumRange) chips.push(`합계 ${conditions.sumRange[0]}~${conditions.sumRange[1]}`);
@@ -76,6 +82,7 @@ function relaxationSuggestions(request: DrawRequest) {
   if (request.conditions.sumRange) suggestions.push("합계 구간 넓히기");
   if (request.conditions.maxSameTail !== undefined) suggestions.push("끝수 분산 완화");
   if (request.conditions.pair) suggestions.push("궁합수 조건 완화");
+  if (request.conditions.birthday) suggestions.push("기념일 날짜 조정");
   if (request.filters.noConsecutive3) suggestions.push("3연속 제외 끄기");
   if (request.filters.noSameTail3) suggestions.push("같은 끝수 필터 끄기");
   return suggestions.length ? suggestions : ["조건 초기화"];
@@ -99,7 +106,8 @@ function pairWeightMap(pairStats: PairStat[], base: LottoNumber[], topK: number)
 export function drawNumbers(request: DrawRequest, context: DrawContext): DrawResult {
   const fixed = [...new Set(request.conditions.fixed ?? [])].filter((number) => Number.isInteger(number) && number >= 1 && number <= 45);
   const pairBase = [...new Set(request.conditions.pair?.base ?? [])].filter((number) => Number.isInteger(number) && number >= 1 && number <= 45);
-  const anchors = [...new Set([...fixed, ...pairBase])];
+  const birthdayNumbers = request.conditions.birthday ? mapBirthdayDates(request.conditions.birthday.dates) : [];
+  const anchors = [...new Set([...fixed, ...pairBase, ...birthdayNumbers])];
   const excluded = new Set((request.conditions.excluded ?? []).filter((number) => Number.isInteger(number) && number >= 1 && number <= 45));
   const relaxed: string[] = [];
   for (const number of anchors) {
@@ -144,7 +152,7 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
       selected.push(number);
     }
 
-    const pool = available.filter((number) => !selected.includes(number));
+    const pool = available.filter((number) => (!request.conditions.birthday || number <= 31) && !selected.includes(number));
     while (selected.length < 6 && pool.length) {
       const number = weightedPick(pool, weightFor);
       selected.push(number);
