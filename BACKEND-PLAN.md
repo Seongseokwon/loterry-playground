@@ -1,8 +1,10 @@
 # 백엔드 설계 계획
 
-작성일: 2026-08-12
-기준 코드: `732d394` (feat: add interactive statistics charts)
+작성일: 2026-08-12 · 최종 갱신: 2026-08-12
+기준 코드: `2980c19` (Connect next pattern to number drawing)
 전제: Next.js 16.2.6 / React 19.2.6 / pnpm / Vercel 배포
+
+> **진행 상태** — **E-1 완료**(커밋 `ea82e91`, `dbd6f52`), **E-2 거의 완료**(`f3600f2`, 남은 것은 `/admin/draws`·알림 채널·무인 검증). E-3 / E-4 / E-6 미착수. 체크리스트는 `TODO.md` E 섹션.
 
 ---
 
@@ -29,21 +31,25 @@
 
 ---
 
-## 1. 현재 코드 상태 — 백엔드가 붙을 자리
+## 1. 현재 코드 상태
 
-프런트가 예상보다 많이 진행돼 있어서, 백엔드는 **기존 인터페이스를 갈아끼우는 작업**에 가깝습니다.
+E-1이 끝나서 아래 표는 대부분 "도입 후" 열로 이동했습니다.
 
-| 영역 | 현재 | 백엔드 도입 후 |
-|---|---|---|
-| 데이터 진입점 | `data/draws.ts` → `lotto-draws.json` (1,236회) | `lib/repositories/draws.ts` (**인터페이스 동일 유지**) |
-| 통계 | `lib/stats.ts` — 모듈 초기화 시 계산 | 상동. 입력만 DB에서 옴 |
-| 궁합수 | `pairStats()` 런타임 계산 (990쌍) | 성능 문제 없으면 **그대로 둔다** |
-| 추첨 엔진 | `lib/draw-engine.ts` — 순수 함수 | **건드리지 않는다** |
-| 등수 판정 | `lib/rank.ts` — 순수 함수 | **건드리지 않는다** |
-| 보관함 | `lib/storage.ts` — IndexedDB, DB_VERSION 1 | 1차 저장소 유지 + 동기화 필드 추가 (§6) |
-| 입력 검증 | `lib/adapter.ts` `toDraw()` | 수집 파이프라인 입구로 이동 |
+| 영역 | 현재 상태 |
+|---|---|
+| 데이터 진입점 | ✅ `lib/repositories/draws.ts` — `getDraws` / `getDrawByRound` / `getNumberStats`. `data/lotto-draws.json`은 롤백용으로 존치 |
+| 통계 | ✅ `lib/stats.ts` — 순수 함수 유지. 입력만 DB에서 옴 |
+| 궁합수 | ✅ `pairStats()` 런타임 계산 (990쌍). 테이블로 내리지 않음 |
+| 추첨 엔진 | ✅ `lib/draw-engine.ts` — 순수 함수, 변경 없음 |
+| 등수 판정 | ✅ `lib/rank.ts` — 순수 함수, 변경 없음 |
+| 다음 패턴 | ✅ `lib/next-pattern.ts` — 순수 함수 (기획서에 없던 신규 기능) |
+| 보관함 | ✅ `lib/storage.ts` — IndexedDB, DB_VERSION 2, 툼스톤 적용 |
+| 수집 | ✅ `lib/collector/source.mjs` 공유 + `POST /api/internal/collect` |
+| 입력 검증 | ✅ `lib/adapter.ts` `toDraw()` — 수집 파이프라인 입구 |
 
-**원칙: 도메인 로직은 DB를 모른다.** `draw-engine` / `rank` / `stats`가 순수 함수인 덕분에 기존 테스트 8개가 그대로 살아남고, 추첨·판정이 계속 클라이언트에서 돌아 DB 비용이 0으로 유지됩니다(§7). 이 구조를 깨지 마세요.
+**원칙: 도메인 로직은 DB를 모른다.** `draw-engine` / `rank` / `stats` / `next-pattern`이 순수 함수인 덕분에 기존 테스트가 그대로 살아남고, 추첨·판정이 계속 클라이언트에서 돌아 DB 비용이 0으로 유지됩니다(§8). 이 구조를 깨지 마세요.
+
+> **주의**: §9의 `GeneratedPick`(생성 번호 집계)이 이 원칙을 건드리는 첫 기능입니다. `/draw`에 쓰기가 생기므로, 착수 전 §9의 비용 계산을 먼저 하세요.
 
 ---
 
@@ -221,6 +227,31 @@ model DrawPrize {
   @@map("draw_prizes")
 }
 
+// ───────── 생성 번호 집계 [E-6] ─────────
+// 사용자 식별자·IP를 저장하지 않습니다. 익명 집계 전용. (§9)
+model GeneratedPick {
+  id          BigInt   @id @default(autoincrement())
+  targetRound Int
+  numbers     Int[]
+  presetId    String?                  // hot | pair | birthday | next-pattern | null(수동)
+  createdAt   DateTime @default(now())
+
+  @@index([targetRound])
+  @@map("generated_picks")
+}
+
+// 회차별 45행으로 접어둔 집계. 페이지뷰마다 원본을 스캔하지 않기 위한 것 (§9)
+model WeeklyPickStat {
+  targetRound Int
+  number      Int
+  pickCount   Int
+  frozen      Boolean  @default(false) // 회차 확정 후 true — 이후 재계산 안 함
+  updatedAt   DateTime @updatedAt
+
+  @@id([targetRound, number])
+  @@map("weekly_pick_stats")
+}
+
 // 출처: 공공데이터포털 「기획재정부_온라인복권 1등 당첨 판매점 현황」 (개방 데이터)
 model WinningStore {
   id        BigInt  @id @default(autoincrement())
@@ -395,36 +426,85 @@ export interface SavedSet {
 | `/results/[round]` | SSG + `revalidateTag("draws")` | 빌드/무효화 시 1회 |
 | `/results` 목록 | SSG, 주 1회 무효화 | 주 1회 |
 | `/stats` | SSG, 집계 결과만 | 주 1회 |
-| `/draw/*` | 정적 셸 + 클라이언트 추첨 | **0건** |
+| `/draw/*` | 정적 셸 + 클라이언트 추첨 | **0건** (E-6 도입 시 저장할 때만 쓰기 1건 — §9) |
 | `/check` | 클라이언트 판정 (`lib/rank.ts`) | **0건** |
 | `/archive` | IndexedDB. 로그인 시에만 동기화 | 로그인 사용자 한정 |
+| `/stats/weekly` | 집계 테이블 + `unstable_cache` N분 | 캐시 미스 시에만 |
 
 추첨·판정·통계가 순수 함수로 도는 현재 구조가 그대로 비용 방어책입니다. §1의 "도메인 로직은 DB를 모른다" 원칙을 지켜야 하는 실질적 이유입니다.
 
 ---
 
-## 9. 실행 순서
+## 9. 생성 번호 집계 [E-6] — 착수 전 설계
 
-체크리스트는 `TODO.md`의 E 섹션에 있습니다. 단계 요약만 적습니다.
+사용자가 만든 번호를 회차 단위로 모아 "이번 주 많이 나온 번호"를 보여주는 기능(`TODO.md` B-8)의 백엔드입니다. **아직 결정 단계이고, 결정 전에 스키마를 확정하지 마세요.**
 
-| 단계 | 내용 | 예상 |
+### 왜 조심해야 하나
+
+지금까지 이 서비스는 **읽기만 하는 백엔드**였습니다. 쓰기는 주 1회 수집뿐이라 무료 티어 100k 오퍼레이션이 사실상 무한이었습니다. 이 기능은 **사용자 트래픽에 비례하는 쓰기**를 처음 들여옵니다. 그래서 트래픽이 늘수록 비용이 늘고, 하필 그 피크가 토요일 밤에 몰립니다.
+
+### 무엇을 기록할 것인가
+
+| 안 | 쓰기량 | 데이터 품질 |
 |---|---|---|
-| **E-1** | 읽기 경로 이관 — Prisma 셋업, 스키마, 시딩, `/results`·`/stats` 전환 | 약 1주 |
-| **E-2** | 수집 자동화 — Route Handler + GitHub Actions + 관리자 폼 | 3~4일 |
-| **E-3** | 인증·동기화 — Better Auth, `SavedTicket`, 병합 | 약 1.5주 |
-| **E-4** | v1.1 데이터 — `DrawPrize`, `WinningStore` | 미정 |
+| 생성마다 | 사용자 1명당 수 건~수십 건 | 버린 번호까지 섞임 |
+| **보관함 저장 시에만** | 저장 1건당 1건 | **실제로 고른 번호만** |
 
-**E-1이 끝나는 지점이 되돌릴 수 있는 마지막 지점입니다.** `data/lotto-draws.json`을 지우지 마세요. DB가 비어도 JSON으로 되돌아갈 수 있어야 합니다.
+**후자를 기본안으로 잡습니다.** 싸고, 통계로서도 더 정직합니다. "이 번호로 하겠다"는 결정만 세는 것이기 때문입니다.
 
-**C-1(정적 생성 범위 최근 30회)을 E-1 전에 결정하세요.** `/results/[round]`는 최근 30회만 정적으로 생성하고 이전 회차는 요청 시 생성하되 `noindex` 처리합니다.
+### 비용 상한을 먼저 계산하세요
+
+100k/월 ÷ 4.3주 ≈ **주당 23,000 오퍼레이션**. 여기서 읽기(`/results`·`/stats` 무효화, 집계 조회 캐시 미스)를 빼고 남는 만큼이 쓰기 예산입니다. 이 숫자를 내지 않고 엔드포인트를 열면 토요일 밤에 티어가 터지고, 그러면 **수집 파이프라인까지 같이 죽습니다.** 그게 진짜 위험입니다.
+
+- 회차당 제출 상한을 예산 아래로 잡을 것
+- 상한 도달 시 실패가 아니라 **조용한 no-op**으로 (사용자의 보관함 저장은 성공해야 함 — 집계는 부가 기능이지 저장 경로를 막을 이유가 없습니다)
+
+### 읽기는 반드시 접어서
+
+`generated_picks`를 페이지뷰마다 스캔하면 안 됩니다. `weekly_pick_stats`에 회차별 45행으로 접어두고, `unstable_cache` + `revalidateTag("picks")`로 페이지뷰당 DB 접근을 끊습니다.
+
+회차가 확정되면 E-2 수집 핸들러가 해당 회차의 집계를 `frozen = true`로 확정합니다. 확정된 회차는 다시 계산하지 않습니다.
+
+### 개인정보
+
+`GeneratedPick`에 **사용자 식별자도 IP도 저장하지 않습니다.** 저장하는 순간 이 테이블은 개인정보가 되고 파기 정책·처리방침·열람 요구 대응이 딸려옵니다. 익명 집계로 두면 그게 전부 사라집니다.
+
+rate limit은 저장 없이 처리하세요 (엣지 미들웨어 / 메모리 카운터). 어뷰징 방어를 위해 IP를 DB에 넣고 싶어지는 순간이 오는데, 그 유혹을 이기는 게 이 설계의 핵심입니다.
+
+### 어뷰징
+
+- 회차당 제출 상한 + rate limit
+- **표본 100세트 미만이면 순위 대신 "표본 부족" 표시** — 초기에 몇 건으로 순위가 뒤집히는 걸 막습니다
+- 원본 `GeneratedPick`은 집계 확정 후 N주 뒤 삭제 (500MB 스토리지 방어)
 
 ---
 
-## 10. 위험 요소
+## 10. 실행 순서
+
+체크리스트는 `TODO.md`의 E 섹션에 있습니다. 단계 요약만 적습니다.
+
+| 단계 | 내용 | 상태 |
+|---|---|---|
+| **E-1** | 읽기 경로 이관 — Prisma 셋업, 스키마, 시딩, `/results`·`/stats` 전환 | ✅ 완료 |
+| **E-2** | 수집 자동화 — Route Handler + GitHub Actions + 관리자 폼 | 🔶 `/admin/draws`·알림·무인 검증 남음 |
+| **E-6** | 생성 번호 집계 — `GeneratedPick`, 집계 테이블 (§9) | ⬜ 결정 단계 |
+| **E-4** | v1.1 데이터 — `DrawPrize`, `WinningStore` | ⬜ 미착수 |
+| **E-3** | 인증·동기화 — Better Auth, `SavedTicket`, 병합 | ⬜ 미착수 (약 1.5주) |
+
+**`data/lotto-draws.json`을 지우지 마세요.** DB가 비어도 JSON으로 되돌아갈 수 있어야 합니다. E-1이 끝난 지금도 이 파일이 유일한 롤백 경로입니다.
+
+C-1(정적 생성 범위)은 최근 30회로 확정·구현됐습니다. 이전 회차는 요청 시 생성 + `noindex`.
+
+---
+
+## 11. 위험 요소
 
 | 위험 | 영향 | 대응 |
 |---|---|---|
 | 무료 티어 오퍼레이션 초과 | 서비스 중단 | §8 캐싱 전략 준수. 첫 달 사용량 실측 후 판단 |
+| **생성 번호 집계로 쓰기 폭증** | 티어 소진 → **수집까지 동반 정지** | §9 비용 상한 선계산. 상한 도달 시 집계만 no-op, 저장 경로는 유지 |
+| **집계 어뷰징으로 통계 왜곡** | 신뢰 훼손 | 회차당 상한 + rate limit + 표본 부족 표시 (§9) |
+| **집계 테이블에 IP/식별자 저장 유혹** | 개인정보 처리 의무 발생 | 익명 집계 원칙 고수. rate limit은 DB 밖에서 (§9) |
 | 동행복권 응답 규격 변경 | 수집 중단 | `toDraw()` 검증 실패를 알림으로. 관리자 수동 입력 폼이 백업 |
 | 수집 차단 (4xx/429) | 데이터 정지 | 자동 중단 + 알림. **우회 시도 금지** (기획서 §7.1) |
 | 동기화 병합 버그로 번호 유실 | 신뢰 직결 | 툼스톤 + LWW + 병합 테스트. 로컬을 1차 저장소로 유지 |
@@ -434,7 +514,7 @@ export interface SavedSet {
 
 ---
 
-## 11. 참고
+## 12. 참고
 
 - [Upgrade to Prisma ORM v7](https://www.prisma.io/docs/guides/upgrade-prisma-orm/v7)
 - [Next.js + Prisma 공식 셋업 가이드 (v7)](https://www.prisma.io/docs/ai/prompts/nextjs)
