@@ -116,6 +116,45 @@
 
 .stats-card { display: flex; flex-direction: column; align-items: center; gap: 24px; }
 .stats-toolbar { width: 100%; display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+.stats-range-tabs { max-width: 100%; overflow-x: auto; }
+.stats-range-tabs button { white-space: nowrap; }
+.round-range-inputs { width: 100%; display: flex; align-items: end; justify-content: center; gap: 10px; color: var(--color-body); font-size: 14px; font-weight: 600; }
+.round-range-inputs label { display: flex; flex-direction: column; gap: 6px; }
+.round-range-inputs input { width: 120px; height: 40px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: var(--radius-btn-s); background: var(--color-canvas); color: var(--color-foreground); }
+.stats-range-label { width: 100%; text-align: center; }
+.distribution-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.distribution-card { min-width: 0; }
+.distribution-list { display: flex; flex-direction: column; gap: 9px; }
+.distribution-row { display: grid; grid-template-columns: 42px 1fr 38px; align-items: center; gap: 8px; font-size: 13px; }
+.distribution-label { color: var(--color-muted); font-variant-numeric: tabular-nums; }
+.distribution-track { height: 18px; display: flex; overflow: hidden; border-radius: 5px; background: var(--color-surface); }
+.distribution-segment { height: 100%; }
+.distribution-first, .legend-first { background: var(--color-primary); }
+.distribution-second, .legend-second { background: var(--color-border); }
+.distribution-row > strong { text-align: right; font-size: 13px; font-variant-numeric: tabular-nums; }
+.distribution-legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
+.distribution-legend > span { display: inline-flex; align-items: center; gap: 5px; }
+.legend-dot { width: 8px; height: 8px; display: inline-block; border-radius: 50%; }
+.sum-distribution-card { overflow: hidden; }
+.sum-chart { position: relative; height: 220px; display: flex; align-items: end; gap: 8px; padding: 20px 0 28px; border-bottom: 1px solid var(--color-border); }
+.sum-bucket { min-width: 0; height: 100%; flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: end; gap: 8px; padding: 0; border: 0; background: transparent; color: var(--color-muted); cursor: pointer; }
+.sum-bucket-bar { width: min(42px, 70%); min-height: 8px; display: flex; align-items: center; justify-content: center; border-radius: 6px 6px 2px 2px; background: var(--color-primary); color: var(--color-on-primary); font-size: 11px; font-weight: 700; }
+.sum-bucket-bar span { transform: translateY(-18px); color: var(--color-body); }
+.sum-bucket small { white-space: nowrap; font-size: 11px; }
+.sum-bucket-active .sum-bucket-bar { background: var(--color-weak-fg); }
+.sum-bucket-active small { color: var(--color-weak-fg); font-weight: 700; }
+.sum-median { position: absolute; top: 0; bottom: 28px; z-index: 1; width: 1px; border-left: 2px dashed var(--color-danger); pointer-events: none; }
+.sum-median span { position: absolute; top: -2px; left: 5px; width: max-content; color: var(--color-danger); font-size: 11px; font-weight: 700; }
+.sum-round-list { margin-top: 20px; padding-top: 16px; border-top: 1px solid var(--color-border); }
+.sum-round-list .section-head { margin-bottom: 8px; }
+.sum-round-row { min-height: 42px; display: flex; align-items: center; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--color-border); color: var(--color-body); font-size: 14px; }
+.sum-round-row:last-child { border-bottom: 0; }
+.sum-round-row strong { color: var(--color-foreground); }
+.prize-trend-card { overflow: hidden; }
+.prize-chart { height: 220px; padding: 12px 0; background: repeating-linear-gradient(to bottom, transparent 0, transparent 24%, var(--color-border) 25%, transparent 26%); }
+.prize-chart svg { width: 100%; height: 100%; overflow: visible; }
+.prize-chart polyline { stroke: var(--color-primary); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.prize-chart-labels { display: flex; justify-content: space-between; color: var(--color-muted); font-size: 12px; }
 .segmented { display: flex; padding: 4px; border-radius: var(--radius-btn-m); background: var(--color-canvas); }
 .segmented button { min-width: 48px; height: 34px; border: 0; border-radius: var(--radius-btn-s); background: transparent; color: var(--color-muted); cursor: pointer; font-size: 13px; }
 .segmented .segment-on { background: var(--color-weak-bg); color: var(--color-weak-fg); font-weight: 700; }
@@ -133,6 +172,9 @@
 .stat-detail div { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--color-border); }
 .stat-detail dt { color: var(--color-muted); }
 .stat-detail dd { margin: 0; font-weight: 700; }
+.detail-pair-list { display: flex; flex-direction: column; }
+.detail-pair-row { min-height: 48px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--color-border); color: var(--color-body); font-size: 14px; }
+.detail-pair-row:last-child { border-bottom: 0; }
 
 @media (max-width: 767px) {
   .home-hero { min-height: auto; grid-template-columns: 1fr; gap: 28px; padding-top: 8px; }
@@ -154,4 +196,9 @@
   .stats-toolbar { align-items: flex-start; flex-direction: column; }
   .segmented { width: 100%; }
   .segmented button { flex: 1; }
+  .distribution-grid { grid-template-columns: 1fr; }
+  .round-range-inputs input { width: 100px; }
+  .sum-chart { gap: 3px; }
+  .sum-bucket small { font-size: 9px; }
+  .sum-median span { transform: rotate(-45deg); transform-origin: left top; }
 }
