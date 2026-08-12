@@ -42,7 +42,7 @@ function DistributionCard({ title, description, firstLabel, secondLabel, items, 
   const total = items.reduce((sum, item) => sum + item.count, 0);
   const selectedDraws = selectedLabel ? draws.filter((draw) => countFor(draw) === Number(selectedLabel.split(":")[0])) : [];
   return (
-    <section className="card distribution-card">
+    <div className="distribution-card">
       <div className="section-head"><div><h3>{title}</h3><p className="body-small">{description}</p></div></div>
       <div className="distribution-list">
         {items.map((item) => {
@@ -61,7 +61,7 @@ function DistributionCard({ title, description, firstLabel, secondLabel, items, 
       </div>
       <p className="body-small distribution-legend"><span><i className="legend-dot legend-first" />{firstLabel}</span><span><i className="legend-dot legend-second" />{secondLabel}</span><span>합계 {total}회</span></p>
       {selectedLabel && <RoundLinks draws={selectedDraws} label={`${firstLabel}:${secondLabel} ${selectedLabel} 회차`} />}
-    </section>
+    </div>
   );
 }
 
@@ -78,7 +78,7 @@ function SumDistribution({ draws }: { draws: Draw[] }) {
   }) : [];
   const medianPosition = Math.min(100, Math.max(0, ((middle - 21) / (255 - 21)) * 100));
   return (
-    <section className="section card sum-distribution-card">
+    <div className="sum-distribution-card">
       <div className="section-head"><div><h3>합계 분포</h3><p className="body-small">선택한 회차의 여섯 번호 합계 · 중앙값 {middle || "-"}</p></div></div>
       <div className="sum-chart" aria-label={`합계 분포 히스토그램, 중앙값 ${middle}`}>
         <span className="sum-median" style={{ left: `${medianPosition}%` }}><span>중앙값 {middle || "-"}</span></span>
@@ -96,43 +96,54 @@ function SumDistribution({ draws }: { draws: Draw[] }) {
           {visibleDraws.map((draw) => <Link href={`/results/${draw.round}`} className="sum-round-row" key={draw.round}><span>제{draw.round}회 · {draw.date}</span><strong>{drawSum(draw)}점</strong></Link>)}
         </div>
       )}
-    </section>
+    </div>
   );
 }
 
 function FirstPrizeTrend({ draws }: { draws: Draw[] }) {
   const [selectedRound, setSelectedRound] = useState<number | null>(null);
+  const [hoveredRound, setHoveredRound] = useState<number | null>(null);
   const trendDraws = [...draws].filter((draw) => typeof draw.firstWinAmount === "number").sort((a, b) => a.round - b.round);
   const amounts = trendDraws.map((draw) => draw.firstWinAmount as number);
   const min = Math.min(...amounts);
   const max = Math.max(...amounts, 1);
-  const points = trendDraws.map((draw, index) => {
-    const x = trendDraws.length <= 1 ? 50 : (index / (trendDraws.length - 1)) * 100;
-    const y = 90 - (((draw.firstWinAmount as number) - min) / Math.max(max - min, 1)) * 75;
-    return `${x.toFixed(2)},${y.toFixed(2)}`;
-  }).join(" ");
+  const chartPoints = trendDraws.map((draw, index) => ({
+    draw,
+    x: trendDraws.length <= 1 ? 50 : (index / (trendDraws.length - 1)) * 100,
+    y: 90 - (((draw.firstWinAmount as number) - min) / Math.max(max - min, 1)) * 75,
+  }));
+  const linePath = chartPoints.length > 1 ? chartPoints.reduce((path, point, index) => {
+    if (index === 0) return `M ${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+    const previous = chartPoints[index - 1];
+    const controlX = ((previous.x + point.x) / 2).toFixed(2);
+    return `${path} C ${controlX} ${previous.y.toFixed(2)}, ${controlX} ${point.y.toFixed(2)}, ${point.x.toFixed(2)} ${point.y.toFixed(2)}`;
+  }, "") : chartPoints[0] ? `M ${chartPoints[0].x.toFixed(2)} ${chartPoints[0].y.toFixed(2)}` : "";
   const selectedDraw = selectedRound === null ? null : trendDraws.find((draw) => draw.round === selectedRound) ?? null;
+  const hoveredPoint = hoveredRound === null ? null : chartPoints.find((point) => point.draw.round === hoveredRound) ?? null;
   return (
-    <section className="section card prize-trend-card">
+    <div className="prize-trend-card">
       <div className="section-head"><div><h3>1등 당첨금 추이</h3><p className="body-small">선택한 회차의 1등 1인당 당첨금 · 오래된 회차에서 최신 회차 순</p></div></div>
       {trendDraws.length > 0 ? (
         <>
           <div className="prize-chart" role="group" aria-label={`1등 당첨금 추이, 최저 ${formatWon(min)}, 최고 ${formatWon(max)}`}>
             <svg viewBox="0 0 100 100" preserveAspectRatio="none">
-              <polyline points={points} fill="none" vectorEffect="non-scaling-stroke" aria-hidden="true" />
-              {trendDraws.map((draw, index) => {
-                const x = trendDraws.length <= 1 ? 50 : (index / (trendDraws.length - 1)) * 100;
-                const y = 90 - (((draw.firstWinAmount as number) - min) / Math.max(max - min, 1)) * 75;
-                return <circle className={selectedRound === draw.round ? "prize-point prize-point-active" : "prize-point"} key={draw.round} cx={x} cy={y} r={selectedRound === draw.round ? 2.8 : 1.7} tabIndex={0} role="button" aria-label={`제${draw.round}회 ${formatWon(draw.firstWinAmount as number)}, 1등 ${draw.firstWinners ?? "-"}명`} onClick={() => setSelectedRound(draw.round)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedRound(draw.round); } }}><title>제{draw.round}회 · {formatWon(draw.firstWinAmount as number)} · 1등 {draw.firstWinners ?? "-"}명</title></circle>;
+              <path d={linePath} fill="none" vectorEffect="non-scaling-stroke" aria-hidden="true" />
+              {chartPoints.map(({ draw, x, y }) => {
+                const active = hoveredRound === draw.round || selectedRound === draw.round;
+                return <g key={draw.round}>
+                  {active && <circle className="prize-point prize-point-active" cx={x} cy={y} r="2.8" aria-hidden="true" />}
+                  <circle className="prize-hit-area" cx={x} cy={y} r="4.5" tabIndex={0} role="button" aria-label={`제${draw.round}회 ${formatWon(draw.firstWinAmount as number)}, 1등 ${draw.firstWinners ?? "-"}명`} onMouseEnter={() => setHoveredRound(draw.round)} onMouseLeave={() => setHoveredRound(null)} onFocus={() => setHoveredRound(draw.round)} onBlur={() => setHoveredRound(null)} onClick={() => setSelectedRound(draw.round)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedRound(draw.round); } }}><title>제{draw.round}회 · {formatWon(draw.firstWinAmount as number)} · 1등 {draw.firstWinners ?? "-"}명</title></circle>
+                </g>;
               })}
             </svg>
+            {hoveredPoint && <div className="prize-tooltip" style={{ left: `${hoveredPoint.x}%`, top: `${hoveredPoint.y}%` }} role="status"><strong>제{hoveredPoint.draw.round}회</strong><span>{formatWon(hoveredPoint.draw.firstWinAmount as number)}</span><small>1등 {hoveredPoint.draw.firstWinners ?? "-"}명</small></div>}
           </div>
           <div className="prize-chart-labels"><span>최저 {formatWon(min)}</span><span>최고 {formatWon(max)}</span></div>
           <p className="body-small">제{trendDraws[0].round}회 {formatWon(trendDraws[0].firstWinAmount as number)} · 제{trendDraws[trendDraws.length - 1].round}회 {formatWon(trendDraws[trendDraws.length - 1].firstWinAmount as number)}</p>
           {selectedDraw && <div className="prize-selected"><div><strong>제{selectedDraw.round}회 · {selectedDraw.date}</strong><p className="body-small">1등 {formatWon(selectedDraw.firstWinAmount as number)} · {selectedDraw.firstWinners ?? "-"}명</p></div><Link href={`/results/${selectedDraw.round}`} className="text-link">결과 보기 →</Link></div>}
         </>
       ) : <p className="body-small">선택한 회차에는 당첨금 데이터가 없어요.</p>}
-    </section>
+    </div>
   );
 }
 
@@ -141,6 +152,8 @@ export function StatsPanel() {
   const [customStart, setCustomStart] = useState(latestRound - 49);
   const [customEnd, setCustomEnd] = useState(latestRound);
   const [selectedNumber, setSelectedNumber] = useState<number | null>(null);
+  const [patternMode, setPatternMode] = useState<"oddEven" | "lowHigh">("oddEven");
+  const [analysisMode, setAnalysisMode] = useState<"sum" | "prize">("sum");
   const selectedDraws = useMemo(() => {
     if (rangePreset === "all") return lottoDraws;
     const count = rangePreset === "custom" ? null : Number(rangePreset);
@@ -173,27 +186,25 @@ export function StatsPanel() {
         <p className="body-small">진할수록 선택한 회차에서 더 자주 나온 번호예요. 과거 빈도는 다음 추첨 확률을 바꾸지 않습니다.</p>
       </section>
 
-      <section className="section distribution-grid">
-        <DistributionCard title="홀짝 분포" description={`${rangeLabel} 기준 홀수:짝수 조합`} firstLabel="홀수" secondLabel="짝수" items={oddEvenDistribution(selectedDraws)} draws={selectedDraws} countFor={(draw) => draw.numbers.filter((number) => number % 2 === 1).length} />
-        <DistributionCard title="고저 분포" description={`${rangeLabel} 기준 낮은 번호:높은 번호 · 기준 1~22/23~45`} firstLabel="낮은 번호" secondLabel="높은 번호" items={lowHighDistribution(selectedDraws)} draws={selectedDraws} countFor={(draw) => draw.numbers.filter((number) => number <= 22).length} />
+      <section className="section card pattern-card">
+        <div className="stats-tab-head"><div><h3>패턴 분포</h3><p className="body-small">분포 막대를 누르면 해당 회차를 볼 수 있어요.</p></div><div className="segmented compact-tabs" role="group" aria-label="패턴 분포 종류"><button type="button" className={patternMode === "oddEven" ? "segment-on" : ""} aria-pressed={patternMode === "oddEven"} onClick={() => setPatternMode("oddEven")}>홀짝</button><button type="button" className={patternMode === "lowHigh" ? "segment-on" : ""} aria-pressed={patternMode === "lowHigh"} onClick={() => setPatternMode("lowHigh")}>고저</button></div></div>
+        {patternMode === "oddEven" ? <DistributionCard title="홀수:짝수" description={`${rangeLabel} 기준`} firstLabel="홀수" secondLabel="짝수" items={oddEvenDistribution(selectedDraws)} draws={selectedDraws} countFor={(draw) => draw.numbers.filter((number) => number % 2 === 1).length} /> : <DistributionCard title="낮은 번호:높은 번호" description={`${rangeLabel} 기준 · 1~22 / 23~45`} firstLabel="낮은 번호" secondLabel="높은 번호" items={lowHighDistribution(selectedDraws)} draws={selectedDraws} countFor={(draw) => draw.numbers.filter((number) => number <= 22).length} />}
       </section>
 
-      <SumDistribution draws={selectedDraws} />
-      <FirstPrizeTrend draws={selectedDraws} />
-
-      <section className="section card">
-        <div className="section-head"><div><h3>오래 쉬고 있는 번호 Top 10</h3><p className="body-small">{rangeLabel} 기준 미출현 회차 수</p></div></div>
-        <div className="bar-list">
-          {cold.map((stat, index) => <Link href={`/results/${stat.lastSeenRound}`} className="bar-row" key={stat.number}><span className="bar-rank">{index + 1}</span><LottoBall number={stat.number} size="sm" /><span className="bar-track"><span className="bar-fill" style={{ "--bar-width": `${Math.max(8, (stat.gap / maxGap) * 100)}%` } as CSSProperties} /></span><strong>{stat.gap}회</strong></Link>)}
-        </div>
+      <section className="section card stats-analysis-card">
+        <div className="stats-tab-head"><div><h3>회차 분석</h3><p className="body-small">합계와 당첨금 흐름을 선택해서 살펴보세요.</p></div><div className="segmented compact-tabs" role="group" aria-label="회차 분석 종류"><button type="button" className={analysisMode === "sum" ? "segment-on" : ""} aria-pressed={analysisMode === "sum"} onClick={() => setAnalysisMode("sum")}>합계</button><button type="button" className={analysisMode === "prize" ? "segment-on" : ""} aria-pressed={analysisMode === "prize"} onClick={() => setAnalysisMode("prize")}>1등 당첨금</button></div></div>
+        {analysisMode === "sum" ? <SumDistribution draws={selectedDraws} /> : <FirstPrizeTrend draws={selectedDraws} />}
       </section>
 
-      <section className="section card">
-        <div className="section-head"><div><h3>궁합수 Top 10</h3><p className="body-small">여섯 당첨번호 안에서 두 번호가 함께 나온 횟수</p></div></div>
-        <div className="bar-list">
-          {topPairs.map((stat, index) => <div className="bar-row pair-bar-row" key={stat.numbers.join("-")}><span className="bar-rank">{index + 1}</span><span className="pair-balls" aria-label={`${stat.numbers[0]}번과 ${stat.numbers[1]}번`}><LottoBall number={stat.numbers[0]} size="sm" /><LottoBall number={stat.numbers[1]} size="sm" /></span><span className="bar-track"><span className="bar-fill" style={{ "--bar-width": `${Math.max(8, (stat.count / maxPairCount) * 100)}%` } as CSSProperties} /></span><strong>{stat.count}회</strong></div>)}
-        </div>
-        <p className="body-small pair-notice">궁합수는 과거 동시출현 통계입니다. 각 추첨은 독립 시행이므로 자주 함께 나온 번호가 다음 회차에 더 잘 나오는 것은 아닙니다.</p>
+      <section className="section card secondary-stats-card">
+        <details className="stats-collapsible">
+          <summary><div><h3>오래 쉬고 있는 번호 Top 10</h3><p className="body-small">{rangeLabel} 기준 미출현 회차 수</p></div><span className="body-small">펼치기</span></summary>
+          <div className="stats-collapsible-content"><div className="bar-list">{cold.map((stat, index) => <Link href={`/results/${stat.lastSeenRound}`} className="bar-row" key={stat.number}><span className="bar-rank">{index + 1}</span><LottoBall number={stat.number} size="sm" /><span className="bar-track"><span className="bar-fill" style={{ "--bar-width": `${Math.max(8, (stat.gap / maxGap) * 100)}%` } as CSSProperties} /></span><strong>{stat.gap}회</strong></Link>)}</div></div>
+        </details>
+        <details className="stats-collapsible">
+          <summary><div><h3>궁합수 Top 10</h3><p className="body-small">여섯 당첨번호 안에서 두 번호가 함께 나온 횟수</p></div><span className="body-small">펼치기</span></summary>
+          <div className="stats-collapsible-content"><div className="bar-list">{topPairs.map((stat, index) => <div className="bar-row pair-bar-row" key={stat.numbers.join("-")}><span className="bar-rank">{index + 1}</span><span className="pair-balls" aria-label={`${stat.numbers[0]}번과 ${stat.numbers[1]}번`}><LottoBall number={stat.numbers[0]} size="sm" /><LottoBall number={stat.numbers[1]} size="sm" /></span><span className="bar-track"><span className="bar-fill" style={{ "--bar-width": `${Math.max(8, (stat.count / maxPairCount) * 100)}%` } as CSSProperties} /></span><strong>{stat.count}회</strong></div>)}</div><p className="body-small pair-notice">궁합수는 과거 동시출현 통계이며 다음 추첨 확률을 높이지 않습니다.</p></div>
+        </details>
       </section>
 
       <ResultSheet open={Boolean(selected)} title={`${selected?.number ?? ""}번 통계`} onClose={() => setSelectedNumber(null)}>

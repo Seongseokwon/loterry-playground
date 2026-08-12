@@ -25,6 +25,9 @@
 .result-row-head, .result-row-head > div, .result-row-meta { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .result-row-head > div { justify-content: flex-start; }
 .result-row-head span, .result-row-meta { color: var(--color-muted); font-size: 13px; }
+.latest-draw-icon { width: 42px; height: 42px; flex: 0 0 auto; object-fit: contain; }
+.result-list-actions { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 28px 0 8px; }
+.result-list-actions .product-button { min-width: 140px; }
 .detail-result { min-height: 240px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 22px; }
 .detail-money h3 { margin-bottom: 12px; }
 .detail-money dl { margin: 0; }
@@ -123,6 +126,20 @@
 .round-range-inputs input { width: 120px; height: 40px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: var(--radius-btn-s); background: var(--color-canvas); color: var(--color-foreground); }
 .stats-range-label { width: 100%; text-align: center; }
 .distribution-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.stats-tab-head { display: flex; align-items: end; justify-content: space-between; gap: 16px; }
+.compact-tabs { flex: 0 0 auto; }
+.compact-tabs { gap: 5px; padding: 5px; }
+.compact-tabs button { min-width: 96px; height: 38px; padding-inline: 14px; white-space: nowrap; }
+.pattern-card .distribution-card { margin-top: 20px; }
+.stats-analysis-card > .sum-distribution-card, .stats-analysis-card > .prize-trend-card { margin-top: 20px; }
+.secondary-stats-card { padding: 0 24px; }
+.stats-collapsible + .stats-collapsible { border-top: 1px solid var(--color-border); }
+.stats-collapsible summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 0; cursor: pointer; list-style: none; }
+.stats-collapsible summary::-webkit-details-marker { display: none; }
+.stats-collapsible summary::after { content: "⌄"; color: var(--color-muted); font-size: 22px; line-height: 1; transition: transform 180ms ease; }
+.stats-collapsible[open] summary::after { transform: rotate(180deg); }
+.stats-collapsible summary h3 { margin-bottom: 4px; }
+.stats-collapsible-content { padding: 0 0 20px; }
 .distribution-card { min-width: 0; }
 .distribution-list { display: flex; flex-direction: column; gap: 9px; }
 .distribution-row { display: grid; grid-template-columns: 42px 1fr 38px; align-items: center; gap: 8px; font-size: 13px; }
@@ -155,11 +172,19 @@
 .sum-round-row:last-child { border-bottom: 0; }
 .sum-round-row strong { color: var(--color-foreground); }
 .prize-trend-card { overflow: hidden; }
-.prize-chart { height: 220px; padding: 12px 0; background: repeating-linear-gradient(to bottom, transparent 0, transparent 24%, var(--color-border) 25%, transparent 26%); }
+.prize-chart { position: relative; height: 260px; margin-top: 12px; padding: 20px 0; background: repeating-linear-gradient(to bottom, transparent 0, transparent 24%, var(--color-border) 25%, transparent 26%); }
 .prize-chart svg { width: 100%; height: 100%; overflow: visible; }
-.prize-chart polyline { stroke: var(--color-primary); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
-.prize-point { fill: var(--color-canvas); stroke: var(--color-primary); stroke-width: 1.5; cursor: pointer; outline: none; }
-.prize-point:hover, .prize-point:focus-visible, .prize-point-active { fill: var(--color-primary); stroke: var(--color-primary); }
+.prize-chart path { stroke: var(--color-primary); stroke-width: 2.5; stroke-linecap: round; stroke-linejoin: round; }
+.prize-point { fill: var(--color-canvas); stroke: var(--color-primary); stroke-width: 1.5; }
+.prize-point-active { fill: var(--color-primary); stroke: var(--color-primary); }
+.prize-hit-area { fill: transparent; stroke: transparent; cursor: pointer; outline: none; }
+.prize-hit-area:focus-visible { fill: color-mix(in srgb, var(--color-primary) 16%, transparent); stroke: var(--color-primary); stroke-width: 1; }
+.prize-tooltip { position: absolute; z-index: 2; display: flex; min-width: 112px; flex-direction: column; gap: 2px; padding: 9px 11px; border: 1px solid var(--color-border); border-radius: var(--radius-btn-s); background: var(--color-foreground); color: var(--color-on-primary); box-shadow: 0 8px 20px color-mix(in srgb, var(--color-foreground) 16%, transparent); transform: translate(-50%, calc(-100% - 14px)); pointer-events: none; white-space: nowrap; }
+.prize-tooltip::after { position: absolute; bottom: -5px; left: 50%; width: 9px; height: 9px; content: ""; background: var(--color-foreground); transform: translateX(-50%) rotate(45deg); }
+.prize-tooltip strong, .prize-tooltip span, .prize-tooltip small { position: relative; z-index: 1; }
+.prize-tooltip strong { font-size: 12px; }
+.prize-tooltip span { font-size: 15px; font-weight: 700; }
+.prize-tooltip small { color: color-mix(in srgb, var(--color-on-primary) 72%, transparent); font-size: 11px; }
 .prize-chart-labels { display: flex; justify-content: space-between; color: var(--color-muted); font-size: 12px; }
 .prize-selected { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 16px; padding: 12px; border-radius: var(--radius-btn-s); background: var(--color-weak-bg); }
 .segmented { display: flex; padding: 4px; border-radius: var(--radius-btn-m); background: var(--color-canvas); }
@@ -204,6 +229,11 @@
   .segmented { width: 100%; }
   .segmented button { flex: 1; }
   .distribution-grid { grid-template-columns: 1fr; }
+  .stats-tab-head { align-items: flex-start; flex-direction: column; }
+  .compact-tabs { width: 100%; }
+  .compact-tabs button { flex: 1; }
+  .prize-chart { height: 230px; }
+  .secondary-stats-card { padding-inline: 20px; }
   .round-range-inputs input { width: 100px; }
   .sum-chart { gap: 3px; }
   .sum-bucket small { font-size: 9px; }
