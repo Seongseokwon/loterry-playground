@@ -1,0 +1,38 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../lib/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Draw {
+  round        Int      @id
+  drawDate     DateTime @db.Date
+  numbers      Int[]
+  bonus        Int
+  totalSell    BigInt?
+  firstWinAmt  BigInt?
+  firstWinners Int?
+  sumValue     Int
+  oddCount     Int
+  lowCount     Int
+  fetchedAt    DateTime @default(now())
+
+  @@index([drawDate])
+  @@map("draws")
+}
+
+model NumberStat {
+  number         Int      @id
+  totalCount     Int
+  lastSeenRound  Int
+  gap            Int
+  countRecent10  Int
+  countRecent50  Int
+  countRecent100 Int
+  updatedAt      DateTime @updatedAt
+
+  @@map("number_stats")
+}
