@@ -54,6 +54,11 @@
 .next-pattern-second { border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--color-border)); background: var(--color-weak-bg); }
 .next-pattern-second strong { color: var(--color-weak-fg); font-size: 20px; letter-spacing: .04em; }
 .next-pattern-empty { width: 100%; padding: 20px; border-radius: var(--radius-btn-m); background: var(--color-canvas); text-align: left; }
+.next-pattern-builder { display: flex; flex-direction: column; gap: 16px; }
+.next-pattern-builder-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.next-pattern-builder-grid > div { display: flex; flex-direction: column; gap: 6px; padding: 14px; border-radius: var(--radius-btn-m); background: var(--color-canvas); }
+.next-pattern-builder-grid strong { color: var(--color-weak-fg); font-size: 19px; letter-spacing: .04em; }
+.next-pattern-builder-selected { border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--color-border)); background: var(--color-weak-bg) !important; }
 .preset-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .preset-description { display: flex; align-items: flex-start; gap: 14px; }
 .preset-description .badge { flex: 0 0 auto; white-space: nowrap; }
@@ -239,6 +244,7 @@
   .preset-description { flex-direction: column; }
   .next-pattern-preview { padding: 32px 20px; }
   .next-pattern-result-grid { grid-template-columns: 1fr; }
+  .next-pattern-builder-grid { grid-template-columns: 1fr; }
   .result-game { align-items: flex-start; flex-direction: column; }
   .check-layout { grid-template-columns: 1fr; }
   .check-result { position: static; }

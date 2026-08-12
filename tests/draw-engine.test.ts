@@ -82,6 +82,20 @@ describe("drawNumbers", () => {
     expect(result.appliedChips).toContain("기념일 · 1개");
   });
 
+  it("다음 패턴의 구간별 번호 개수를 지킨다", () => {
+    const result = drawNumbers({ ...base, conditions: { rangePattern: [1, 2, 1, 1, 1] } }, context);
+    expect(result.games).toHaveLength(1);
+    const counts = [
+      result.games[0].filter((number) => number <= 10).length,
+      result.games[0].filter((number) => number >= 11 && number <= 20).length,
+      result.games[0].filter((number) => number >= 21 && number <= 30).length,
+      result.games[0].filter((number) => number >= 31 && number <= 40).length,
+      result.games[0].filter((number) => number >= 41).length,
+    ];
+    expect(counts).toEqual([1, 2, 1, 1, 1]);
+    expect(result.appliedChips).toContain("다음 패턴 · 1·2·1·1·1");
+  });
+
   it("고급 조건 충돌 시 완화 안내를 제안한다", () => {
     const result = drawNumbers({
       ...base,

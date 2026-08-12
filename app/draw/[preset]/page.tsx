@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import { DrawBuilder } from "@/components/draw/DrawBuilder";
-import { NextPatternPreview } from "@/components/draw/NextPatternPreview";
 
 const presets = ["hot", "cold", "fixed", "carryover", "pair", "birthday", "next-pattern"] as const;
 type Preset = (typeof presets)[number];
@@ -14,6 +13,5 @@ export async function generateMetadata({ params }: { params: Promise<{ preset: s
 export default async function PresetDrawPage({ params }: { params: Promise<{ preset: string }> }) {
   const { preset } = await params;
   if (!presets.includes(preset as Preset)) notFound();
-  if (preset === "next-pattern") return <div className="page page-narrow"><NextPatternPreview /></div>;
-  return <div className="page page-narrow"><DrawBuilder preset={preset as Exclude<Preset, "next-pattern">} /></div>;
+  return <div className="page page-narrow"><DrawBuilder preset={preset as Preset} /></div>;
 }

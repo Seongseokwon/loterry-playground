@@ -1,3 +1,5 @@
+import type { Pattern } from "@/lib/next-pattern";
+
 export type LottoNumber = number;
 
 export interface Draw {
@@ -37,6 +39,7 @@ export interface DrawConditions {
   lowCount?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   sumRange?: [number, number];
   maxSameTail?: 1 | 2;
+  rangePattern?: Pattern;
 }
 
 export interface DrawRequest {

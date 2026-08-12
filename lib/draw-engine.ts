@@ -1,5 +1,6 @@
 import { randomInt } from "./random";
 import { pairStats as aggregatePairStats } from "./stats";
+import { DEFAULT_NUMBER_RANGES } from "./next-pattern";
 import type { DrawContext, DrawRequest, DrawResult, LottoNumber, NumberStat, PairStat } from "./types";
 
 // TODO: W2에 실데이터로 튜닝
@@ -42,6 +43,10 @@ function maxTailCount(numbers: number[]) {
 
 function passesPatterns(numbers: number[], request: DrawRequest, pastKeys: Set<string>) {
   const { conditions, filters } = request;
+  if (conditions.rangePattern) {
+    const matches = DEFAULT_NUMBER_RANGES.every(([min, max], index) => conditions.rangePattern![index] === numbers.filter((number) => number >= min && number <= max).length);
+    if (!matches) return false;
+  }
   if (conditions.oddCount !== undefined && numbers.filter((number) => number % 2 === 1).length !== conditions.oddCount) return false;
   if (conditions.lowCount !== undefined && numbers.filter((number) => number <= 22).length !== conditions.lowCount) return false;
   if (conditions.sumRange && (numbers.reduce((sum, number) => sum + number, 0) < conditions.sumRange[0] || numbers.reduce((sum, number) => sum + number, 0) > conditions.sumRange[1])) return false;
@@ -66,6 +71,7 @@ function chipLabels(request: DrawRequest) {
   if (conditions.lowCount !== undefined) chips.push(`고저 ${conditions.lowCount}:${6 - conditions.lowCount}`);
   if (conditions.sumRange) chips.push(`합계 ${conditions.sumRange[0]}~${conditions.sumRange[1]}`);
   if (conditions.maxSameTail !== undefined) chips.push(`끝수 ${conditions.maxSameTail}개 이하`);
+  if (conditions.rangePattern) chips.push(`다음 패턴 · ${conditions.rangePattern.join("·")}`);
   if (filters.noConsecutive3) chips.push("3연속 번호 제외");
   if (filters.noPastJackpot) chips.push("과거 1등 조합 제외");
   if (filters.noSameTail3) chips.push("같은 끝수 3개 제외");
@@ -153,10 +159,25 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
     }
 
     const pool = available.filter((number) => (!request.conditions.birthday || number <= 31) && !selected.includes(number));
-    while (selected.length < 6 && pool.length) {
-      const number = weightedPick(pool, weightFor);
-      selected.push(number);
-      pool.splice(pool.indexOf(number), 1);
+    if (request.conditions.rangePattern) {
+      for (const [rangeIndex, [min, max]] of DEFAULT_NUMBER_RANGES.entries()) {
+        const target = request.conditions.rangePattern[rangeIndex];
+        const inRange = selected.filter((number) => number >= min && number <= max).length;
+        if (inRange > target) continue;
+        const rangePool = pool.filter((number) => number >= min && number <= max);
+        while (selected.filter((number) => number >= min && number <= max).length < target && rangePool.length) {
+          const number = weightedPick(rangePool, weightFor);
+          selected.push(number);
+          rangePool.splice(rangePool.indexOf(number), 1);
+          pool.splice(pool.indexOf(number), 1);
+        }
+      }
+    } else {
+      while (selected.length < 6 && pool.length) {
+        const number = weightedPick(pool, weightFor);
+        selected.push(number);
+        pool.splice(pool.indexOf(number), 1);
+      }
     }
     if (selected.length !== 6) continue;
     selected.sort((a, b) => a - b);

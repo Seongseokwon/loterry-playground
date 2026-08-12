@@ -12,10 +12,11 @@ import { TextField } from "@/components/ui/TextField";
 import { lottoDraws, lottoPairStats } from "@/data/draws";
 import { drawNumbers } from "@/lib/draw-engine";
 import { aggregateNumberStats } from "@/lib/stats";
+import { analyzeNextPatterns, formatPattern } from "@/lib/next-pattern";
 import { saveSavedSet, type SavedSet, type SavedSetInput, type SavedSetNumbers } from "@/lib/storage";
 import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 
-type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair" | "birthday";
+type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair" | "birthday" | "next-pattern";
 type SumMode = "none" | "narrow" | "wide" | "custom";
 
 const COUNT_OPTIONS = [0, 1, 2, 3, 4, 5, 6] as const;
@@ -28,6 +29,7 @@ const presetCopy: Record<Preset, { title: string; copy: string }> = {
   carryover: { title: "지난 회차 번호 섞기", copy: "직전 회차 당첨번호 중 하나를 반드시 포함하고 나머지를 새로 골라요. 같은 숫자가 연속 회차에 나오는 현상을 재미있게 살펴보는 조건이에요." },
   pair: { title: "궁합수", copy: "과거 회차에서 함께 나온 횟수가 많은 번호를 참고해요. 기준 번호는 조합에 포함하고, 상위 K개 궁합수에 등장한 동반 번호에 가중치를 더해요." },
   birthday: { title: "기념일 번호", copy: "입력한 날짜의 일을 1~31 번호로 바꾸고, 부족한 자리는 1~31 안에서 랜덤으로 채워요. 날짜를 번호로 바꾸는 방식에는 분명한 편향이 있어요." },
+  "next-pattern": { title: "다음 패턴 추천", copy: "최근 100회에서 현재 패턴 다음에 이어진 횟수가 많은 2위 패턴으로 번호를 구성해요. 1위 패턴은 광고 보상 기능 연결 후 공개할 예정이에요." },
 };
 
 export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
@@ -63,6 +65,8 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [pendingSave, setPendingSave] = useState<SavedSetInput | null>(null);
   const stats = useMemo(() => aggregateNumberStats(lottoDraws), []);
   const pairs = useMemo(() => preset === "pair" ? lottoPairStats : [], [preset]);
+  const nextPatternAnalysis = useMemo(() => preset === "next-pattern" ? analyzeNextPatterns(lottoDraws) : null, [preset]);
+  const selectedNextPattern = nextPatternAnalysis?.candidates[1]?.pattern;
   const sumRange: [number, number] | undefined = sumMode === "none" ? undefined : sumMode === "narrow" ? [120, 160] : sumMode === "wide" ? [100, 180] : [sumMin, sumMax];
 
   const request = (): DrawRequest => ({
@@ -74,6 +78,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       carryover: carryover ? { count: 1 } : undefined,
       pair: preset === "pair" ? { base: pairBase, topK: pairTopK } : undefined,
       birthday: preset === "birthday" ? { dates: birthdayDates.filter(Boolean) } : undefined,
+      rangePattern: selectedNextPattern,
       oddCount,
       lowCount,
       sumRange,
@@ -161,9 +166,23 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           <PresetCard href="/draw/carryover" icon="carryover" title="이월수" description="직전 회차 1개" active={preset === "carryover"} />
           <PresetCard href="/draw/pair" icon="hot" title="궁합수" description="동시출현 Top K" active={preset === "pair"} />
           <PresetCard href="/draw/birthday" icon="fixed" title="기념일" description="날짜를 번호로" active={preset === "birthday"} />
-          <PresetCard href="/draw/next-pattern" icon="next-pattern" title="다음 패턴" description="전이 분석 · 준비 중" />
+          <PresetCard href="/draw/next-pattern" icon="next-pattern" title="다음 패턴" description="2위 패턴으로 뽑기" active={preset === "next-pattern"} />
         </div>
       </section>
+
+      {preset === "next-pattern" && nextPatternAnalysis && (
+        <section className="section card next-pattern-builder">
+          <div className="section-head">
+            <div><h3>2위 패턴으로 번호 뽑기</h3><p className="body-small">최근 100회 중 현재 패턴 다음에 이어진 패턴을 기준으로 구성해요.</p></div>
+            <Badge tone="weak">{nextPatternAnalysis.matchingRounds}회 관찰</Badge>
+          </div>
+          <div className="next-pattern-builder-grid">
+            <div><span className="body-small">현재 패턴</span><strong>{formatPattern(nextPatternAnalysis.currentPattern)}</strong></div>
+            <div className="next-pattern-builder-selected"><span className="body-small">사용할 2위 패턴</span><strong>{selectedNextPattern ? formatPattern(selectedNextPattern) : "추천 데이터 부족"}</strong></div>
+          </div>
+          <p className="body-small">번호 뽑기 버튼을 누르면 위 구간 분포를 지키면서 번호를 만들어요. 과거 패턴은 당첨을 예측하지 않습니다.</p>
+        </section>
+      )}
 
       {preset === "pair" && (
         <section className="section card pair-builder">
