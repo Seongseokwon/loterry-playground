@@ -6,9 +6,9 @@ import { StatHeatmap } from "@/components/lotto/StatHeatmap";
 import { ResultSheet } from "@/components/lotto/ResultSheet";
 import { LottoBall } from "@/components/lotto/LottoBall";
 import { Badge } from "@/components/ui/Badge";
-import { lottoDraws } from "@/data/draws";
+import { lottoDraws, lottoPairStats } from "@/data/draws";
 import { aggregateNumberStats } from "@/lib/stats";
-import type { NumberStat } from "@/lib/types";
+import type { NumberStat, PairStat } from "@/lib/types";
 
 type Period = "all" | "100" | "50" | "10";
 
@@ -19,6 +19,8 @@ export function StatsPanel() {
   const key = period === "10" ? "countRecent10" : period === "50" ? "countRecent50" : period === "100" ? "countRecent100" : "totalCount";
   const cold = [...stats].sort((a, b) => b.gap - a.gap).slice(0, 10);
   const maxGap = Math.max(...cold.map((item) => item.gap), 1);
+  const topPairs: PairStat[] = lottoPairStats.slice(0, 10);
+  const maxPairCount = Math.max(...topPairs.map((item) => item.count), 1);
   return (
     <>
       <section className="card stats-card">
@@ -44,6 +46,21 @@ export function StatsPanel() {
             </Link>
           ))}
         </div>
+      </section>
+
+      <section className="section card">
+        <div className="section-head"><div><h3>궁합수 Top 10</h3><p className="body-small">여섯 당첨번호 안에서 두 번호가 함께 나온 횟수</p></div></div>
+        <div className="bar-list">
+          {topPairs.map((stat, index) => (
+            <div className="bar-row pair-bar-row" key={stat.numbers.join("-")}>
+              <span className="bar-rank">{index + 1}</span>
+              <span className="pair-balls" aria-label={`${stat.numbers[0]}번과 ${stat.numbers[1]}번`}><LottoBall number={stat.numbers[0]} size="sm" /><LottoBall number={stat.numbers[1]} size="sm" /></span>
+              <span className="bar-track"><span className="bar-fill" style={{ "--bar-width": `${Math.max(8, (stat.count / maxPairCount) * 100)}%` } as CSSProperties} /></span>
+              <strong>{stat.count}회</strong>
+            </div>
+          ))}
+        </div>
+        <p className="body-small pair-notice">궁합수는 과거 동시출현 통계입니다. 각 추첨은 독립 시행이므로 자주 함께 나온 번호가 다음 회차에 더 잘 나오는 것은 아닙니다.</p>
       </section>
 
       <ResultSheet open={Boolean(selected)} title={`${selected?.number ?? ""}번 통계`} onClose={() => setSelected(null)}>

@@ -20,6 +20,11 @@ export interface NumberStat {
   countRecent100: number;
 }
 
+export interface PairStat {
+  numbers: [LottoNumber, LottoNumber];
+  count: number;
+}
+
 export interface DrawConditions {
   fixed?: LottoNumber[];
   excluded?: LottoNumber[];
@@ -50,6 +55,7 @@ export interface DrawResult {
 
 export interface DrawContext {
   stats: NumberStat[];
+  pairStats?: PairStat[];
   latestDraw: Draw;
   pastDraws: Draw[];
 }
