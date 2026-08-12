@@ -1,0 +1,21 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: lotto-play-ground-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-lotto_play_ground}
+      POSTGRES_USER: ${POSTGRES_USER:-lotto}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-lotto_local_dev}
+    ports:
+      - "5432:5432"
+    volumes:
+      - lotto-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-lotto} -d ${POSTGRES_DB:-lotto_play_ground}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  lotto-postgres-data:

@@ -6,14 +6,10 @@ import { StatHeatmap } from "@/components/lotto/StatHeatmap";
 import { ResultSheet } from "@/components/lotto/ResultSheet";
 import { LottoBall } from "@/components/lotto/LottoBall";
 import { Badge } from "@/components/ui/Badge";
-import { lottoDraws, lottoPairStats } from "@/data/draws";
 import { aggregateNumberStats, drawSum, lowHighDistribution, median, oddEvenDistribution, SUM_RANGES } from "@/lib/stats";
 import type { Draw, PairStat } from "@/lib/types";
 
 type RangePreset = "10" | "50" | "100" | "all" | "custom";
-
-const latestRound = lottoDraws[0].round;
-const oldestRound = lottoDraws[lottoDraws.length - 1].round;
 
 function formatWon(amount: number) {
   return `${Math.round(amount / 10_000).toLocaleString("ko-KR")}만원`;
@@ -147,7 +143,9 @@ function FirstPrizeTrend({ draws }: { draws: Draw[] }) {
   );
 }
 
-export function StatsPanel() {
+export function StatsPanel({ draws, pairStats }: { draws: Draw[]; pairStats: PairStat[] }) {
+  const latestRound = draws[0].round;
+  const oldestRound = draws[draws.length - 1].round;
   const [rangePreset, setRangePreset] = useState<RangePreset>("50");
   const [customStart, setCustomStart] = useState(latestRound - 49);
   const [customEnd, setCustomEnd] = useState(latestRound);
@@ -155,21 +153,21 @@ export function StatsPanel() {
   const [patternMode, setPatternMode] = useState<"oddEven" | "lowHigh">("oddEven");
   const [analysisMode, setAnalysisMode] = useState<"sum" | "prize">("sum");
   const selectedDraws = useMemo(() => {
-    if (rangePreset === "all") return lottoDraws;
+    if (rangePreset === "all") return draws;
     const count = rangePreset === "custom" ? null : Number(rangePreset);
-    if (count) return lottoDraws.slice(0, count);
+    if (count) return draws.slice(0, count);
     const start = Math.max(oldestRound, Math.min(customStart, customEnd));
     const end = Math.min(latestRound, Math.max(customStart, customEnd));
-    return lottoDraws.filter((draw) => draw.round >= start && draw.round <= end);
-  }, [customEnd, customStart, rangePreset]);
+    return draws.filter((draw) => draw.round >= start && draw.round <= end);
+  }, [customEnd, customStart, draws, rangePreset]);
   const stats = useMemo(() => aggregateNumberStats(selectedDraws), [selectedDraws]);
   const selected = selectedNumber === null ? null : stats.find((stat) => stat.number === selectedNumber) ?? null;
   const cold = [...stats].sort((a, b) => b.gap - a.gap).slice(0, 10);
   const maxGap = Math.max(...cold.map((item) => item.gap), 1);
-  const topPairs: PairStat[] = lottoPairStats.slice(0, 10);
+  const topPairs: PairStat[] = pairStats.slice(0, 10);
   const maxPairCount = Math.max(...topPairs.map((item) => item.count), 1);
   const rangeLabel = rangePreset === "all" ? `제${oldestRound}~${latestRound}회` : rangePreset === "custom" ? `제${Math.min(customStart, customEnd)}~${Math.max(customStart, customEnd)}회` : `최근 ${rangePreset}회`;
-  const selectedPairStats = selected ? lottoPairStats.filter((stat) => stat.numbers.includes(selected.number)).slice(0, 5) : [];
+  const selectedPairStats = selected ? pairStats.filter((stat) => stat.numbers.includes(selected.number)).slice(0, 5) : [];
 
   return (
     <>
@@ -210,7 +208,7 @@ export function StatsPanel() {
       <ResultSheet open={Boolean(selected)} title={`${selected?.number ?? ""}번 통계`} onClose={() => setSelectedNumber(null)}>
         {selected && <div className="stack">
           <div className="row"><LottoBall number={selected.number} size="lg" /><Badge>최근 {selected.gap}회 미출현</Badge></div>
-          <dl className="stat-detail"><div><dt>선택 범위 누적</dt><dd>{selected.totalCount}회</dd></div><div><dt>최근 출현</dt><dd>제{selected.lastSeenRound}회</dd></div><div><dt>전체 누적</dt><dd>{aggregateNumberStats(lottoDraws)[selected.number - 1].totalCount}회</dd></div></dl>
+          <dl className="stat-detail"><div><dt>선택 범위 누적</dt><dd>{selected.totalCount}회</dd></div><div><dt>최근 출현</dt><dd>제{selected.lastSeenRound}회</dd></div><div><dt>전체 누적</dt><dd>{aggregateNumberStats(draws)[selected.number - 1].totalCount}회</dd></div></dl>
           <div><h4>궁합수 Top 5</h4><p className="body-small">전체 데이터 기준 함께 나온 횟수</p></div>
           <div className="detail-pair-list">{selectedPairStats.map((stat) => { const other = stat.numbers[0] === selected.number ? stat.numbers[1] : stat.numbers[0]; return <div className="detail-pair-row" key={stat.numbers.join("-")}><LottoBall number={other} size="sm" /><span>{stat.count}회 함께 출현</span></div>; })}</div>
           <p className="body-small">통계는 과거 결과를 읽는 도구이며 다음 번호를 예측하지 않습니다.</p>

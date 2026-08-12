@@ -3,7 +3,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
-import collectedDraws from "@/data/lotto-draws.json";
 import { BallRow } from "@/components/lotto/BallRow";
 import { ProductButton } from "@/components/ui/Button";
 import { formatWon } from "@/lib/format";
@@ -11,12 +10,7 @@ import type { Draw } from "@/lib/types";
 
 const PAGE_SIZE = 25;
 
-const draws: Draw[] = collectedDraws.map((draw) => ({
-  ...draw,
-  numbers: draw.numbers as Draw["numbers"],
-}));
-
-export function ResultsList() {
+export function ResultsList({ draws }: { draws: Draw[] }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const visibleDraws = draws.slice(0, visibleCount);
   const hasMore = visibleCount < draws.length;

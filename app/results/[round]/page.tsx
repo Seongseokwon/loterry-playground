@@ -3,21 +3,23 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BallRow } from "@/components/lotto/BallRow";
 import { Badge } from "@/components/ui/Badge";
-import { lottoDraws } from "@/data/draws";
 import { formatKoreanDate, formatWon } from "@/lib/format";
+import { getDrawByRound, getDraws } from "@/lib/repositories/draws";
 
 const INDEXABLE_ROUNDS = 30;
 
 export const dynamicParams = true;
 
-export function generateStaticParams() {
-  return lottoDraws.slice(0, INDEXABLE_ROUNDS).map((draw) => ({ round: String(draw.round) }));
+export async function generateStaticParams() {
+  const draws = await getDraws();
+  return draws.slice(0, INDEXABLE_ROUNDS).map((draw) => ({ round: String(draw.round) }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ round: string }> }): Promise<Metadata> {
   const { round } = await params;
-  const draw = lottoDraws.find((item) => item.round === Number(round));
-  const isIndexable = draw ? lottoDraws.indexOf(draw) < INDEXABLE_ROUNDS : false;
+  const draws = await getDraws();
+  const draw = draws.find((item) => item.round === Number(round));
+  const isIndexable = draw ? draws.indexOf(draw) < INDEXABLE_ROUNDS : false;
   return {
     title: `제${round}회 당첨번호`,
     description: `제${round}회 로또 당첨번호와 1등 정보를 확인하세요.`,
@@ -27,11 +29,11 @@ export async function generateMetadata({ params }: { params: Promise<{ round: st
 
 export default async function ResultDetailPage({ params }: { params: Promise<{ round: string }> }) {
   const { round } = await params;
-  const draw = lottoDraws.find((item) => item.round === Number(round));
+  const [draw, draws] = await Promise.all([getDrawByRound(Number(round)), getDraws()]);
   if (!draw) notFound();
-  const index = lottoDraws.findIndex((item) => item.round === draw.round);
-  const newer = index > 0 ? lottoDraws[index - 1] : null;
-  const older = index < lottoDraws.length - 1 ? lottoDraws[index + 1] : null;
+  const index = draws.findIndex((item) => item.round === draw.round);
+  const newer = index > 0 ? draws[index - 1] : null;
+  const older = index < draws.length - 1 ? draws[index + 1] : null;
   return (
     <div className="page page-narrow">
       <header className="page-header"><p className="eyebrow">{formatKoreanDate(draw.date)}</p><h1>제{draw.round}회 당첨번호</h1></header>
