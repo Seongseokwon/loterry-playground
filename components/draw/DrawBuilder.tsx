@@ -9,13 +9,13 @@ import { NumberGrid } from "@/components/lotto/NumberGrid";
 import { PresetCard } from "@/components/lotto/PresetCard";
 import { ResultSheet } from "@/components/lotto/ResultSheet";
 import { TextField } from "@/components/ui/TextField";
-import { lottoDraws } from "@/data/draws";
+import { lottoDraws, lottoPairStats } from "@/data/draws";
 import { drawNumbers } from "@/lib/draw-engine";
 import { aggregateNumberStats } from "@/lib/stats";
 import { saveSavedSet, type SavedSet, type SavedSetInput, type SavedSetNumbers } from "@/lib/storage";
 import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 
-type Preset = "random" | "hot" | "cold" | "fixed" | "carryover";
+type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair";
 type SumMode = "none" | "narrow" | "wide" | "custom";
 
 const COUNT_OPTIONS = [0, 1, 2, 3, 4, 5, 6] as const;
@@ -26,6 +26,7 @@ const presetCopy: Record<Preset, { title: string; copy: string }> = {
   cold: { title: "한동안 쉬고 있는 번호", copy: "마지막으로 나온 지 오래된 상위 20개 번호에 가중치를 더해 골라요. 오래 나오지 않았다는 사실이 다음 추첨에서 나올 가능성을 높이지는 않아요." },
   fixed: { title: "내 번호 넣기", copy: "꼭 넣고 싶은 번호를 최대 5개까지 정하고, 남은 자리는 안전한 난수로 채워요. 넣을 번호와 뺄 번호가 겹치면 넣을 번호를 우선해요." },
   carryover: { title: "지난 회차 번호 섞기", copy: "직전 회차 당첨번호 중 하나를 반드시 포함하고 나머지를 새로 골라요. 같은 숫자가 연속 회차에 나오는 현상을 재미있게 살펴보는 조건이에요." },
+  pair: { title: "궁합수", copy: "과거 회차에서 함께 나온 횟수가 많은 번호를 참고해요. 기준 번호는 조합에 포함하고, 상위 K개 궁합수에 등장한 동반 번호에 가중치를 더해요." },
 };
 
 export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
@@ -35,6 +36,9 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [hot, setHot] = useState(preset === "hot");
   const [cold, setCold] = useState(preset === "cold");
   const [carryover, setCarryover] = useState(preset === "carryover");
+  const [pairBase, setPairBase] = useState<number[]>([]);
+  const [pairTopK, setPairTopK] = useState(20);
+  const [pairEditing, setPairEditing] = useState(false);
   const [noConsecutive3, setNoConsecutive3] = useState(true);
   const [noPastJackpot, setNoPastJackpot] = useState(true);
   const [noSameTail3, setNoSameTail3] = useState(false);
@@ -56,6 +60,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [limitNotice, setLimitNotice] = useState<SavedSet | null>(null);
   const [pendingSave, setPendingSave] = useState<SavedSetInput | null>(null);
   const stats = useMemo(() => aggregateNumberStats(lottoDraws), []);
+  const pairs = useMemo(() => preset === "pair" ? lottoPairStats : [], [preset]);
   const sumRange: [number, number] | undefined = sumMode === "none" ? undefined : sumMode === "narrow" ? [120, 160] : sumMode === "wide" ? [100, 180] : [sumMin, sumMax];
 
   const request = (): DrawRequest => ({
@@ -65,6 +70,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       hot: hot ? { window: 30, weight: "mid" } : undefined,
       cold: cold ? { poolSize: 20 } : undefined,
       carryover: carryover ? { count: 1 } : undefined,
+      pair: preset === "pair" ? { base: pairBase, topK: pairTopK } : undefined,
       oddCount,
       lowCount,
       sumRange,
@@ -81,7 +87,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     setSaveError("");
     setLimitNotice(null);
     setPendingSave(null);
-    setResult(drawNumbers(request(), { stats, latestDraw: lottoDraws[0], pastDraws: lottoDraws }));
+    setResult(drawNumbers(request(), { stats, pairStats: pairs, latestDraw: lottoDraws[0], pastDraws: lottoDraws }));
   };
 
   const toggleFixed = (number: number) => setFixed((current) => current.includes(number) ? current.filter((item) => item !== number) : current.length < 5 ? [...current, number].sort((a, b) => a - b) : current);
@@ -150,8 +156,30 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           <PresetCard href="/draw/cold" icon="cold" title="미출현" description="상위 20개" active={preset === "cold"} />
           <PresetCard href="/draw/fixed" icon="fixed" title="내 번호" description="최대 5개 넣기" active={preset === "fixed"} />
           <PresetCard href="/draw/carryover" icon="carryover" title="이월수" description="직전 회차 1개" active={preset === "carryover"} />
+          <PresetCard href="/draw/pair" icon="hot" title="궁합수" description="동시출현 Top K" active={preset === "pair"} />
         </div>
       </section>
+
+      {preset === "pair" && (
+        <section className="section card pair-builder">
+          <div className="section-head">
+            <div><h3>기준 번호</h3><p className="body-small">1~2개를 고르면 해당 번호와 자주 함께 나온 번호를 우선해요.</p></div>
+            <span className="body-small">{pairBase.length}/2개</span>
+          </div>
+          <div className="row pair-builder-actions">
+            <ProductButton size="small" tone="weak" onClick={() => setPairEditing((current) => !current)}>{pairEditing ? "선택 닫기" : "번호 고르기"}</ProductButton>
+            {pairBase.length > 0 && <Badge tone="weak">기준 {pairBase.join(", ")}</Badge>}
+          </div>
+          {pairEditing && <NumberGrid selected={pairBase} maxSelected={2} onToggle={(number) => setPairBase((current) => current.includes(number) ? current.filter((item) => item !== number) : current.length < 2 ? [...current, number].sort((a, b) => a - b) : current)} />}
+          <fieldset className="pair-topk">
+            <legend>참고할 궁합수 범위</legend>
+            <div className="segmented" role="group" aria-label="참고할 궁합수 범위">
+              {[10, 20, 50, 100].map((count) => <button type="button" key={count} className={pairTopK === count ? "segment-on" : ""} aria-pressed={pairTopK === count} onClick={() => setPairTopK(count)}>상위 {count}</button>)}
+            </div>
+          </fieldset>
+          <p className="body-small pair-notice">궁합수는 과거에 함께 나온 횟수일 뿐이에요. 각 추첨은 독립적으로 시행되므로 다음 당첨 확률을 높이지 않습니다.</p>
+        </section>
+      )}
 
       <section className="section card preset-description">
         <Badge tone="weak">{presetCopy[preset].title}</Badge>

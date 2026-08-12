@@ -36,13 +36,20 @@
 .official-note { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 
 .draw-intro { display: flex; flex-direction: column; gap: 6px; }
-.preset-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.preset-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .preset-description { display: flex; align-items: flex-start; gap: 14px; }
 .preset-description p { color: var(--color-body); }
 .draw-divider { margin-top: 40px; }
 .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
 .number-picker { margin-top: 20px; }
 .number-picker .number-grid { margin: 0 auto; }
+.pair-builder { display: flex; flex-direction: column; gap: 16px; }
+.pair-builder .number-grid { margin: 0 auto; }
+.pair-builder-actions { min-height: 38px; }
+.pair-topk { display: flex; flex-direction: column; gap: 8px; padding: 16px 0 0; border: 0; border-top: 1px solid var(--color-border); }
+.pair-topk legend { font-weight: 600; }
+.pair-topk .segmented { width: fit-content; max-width: 100%; overflow-x: auto; }
+.pair-notice { padding: 12px; border-radius: var(--radius-btn-s); background: var(--color-weak-bg); }
 .filter-card { display: flex; flex-direction: column; gap: 18px; }
 .advanced-conditions { padding: 0; overflow: hidden; }
 .advanced-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; cursor: pointer; list-style: none; }
@@ -112,6 +119,9 @@
 .bar-track { height: 8px; border-radius: 999px; background: var(--color-surface); overflow: hidden; }
 .bar-fill { width: var(--bar-width); height: 100%; display: block; border-radius: inherit; background: var(--color-primary); }
 .bar-row > strong { text-align: right; font-variant-numeric: tabular-nums; font-size: 14px; }
+.pair-bar-row { grid-template-columns: 28px 84px 1fr 46px; }
+.pair-balls { display: flex; align-items: center; gap: 4px; }
+.pair-balls .lotto-ball { width: 34px; height: 34px; font-size: 14px; }
 .stat-detail { margin: 0; }
 .stat-detail div { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid var(--color-border); }
 .stat-detail dt { color: var(--color-muted); }

@@ -1,10 +1,10 @@
 import { describe, expect, it } from "vitest";
 import { lottoDraws } from "@/data/draws";
 import { drawNumbers } from "@/lib/draw-engine";
-import { aggregateNumberStats } from "@/lib/stats";
+import { aggregateNumberStats, pairStats } from "@/lib/stats";
 import type { DrawRequest } from "@/lib/types";
 
-const context = { stats: aggregateNumberStats(lottoDraws), latestDraw: lottoDraws[0], pastDraws: lottoDraws };
+const context = { stats: aggregateNumberStats(lottoDraws), pairStats: pairStats(lottoDraws), latestDraw: lottoDraws[0], pastDraws: lottoDraws };
 const base: DrawRequest = { conditions: {}, filters: { noConsecutive3: true, noPastJackpot: true, noSameTail3: false }, games: 1 };
 
 describe("drawNumbers", () => {
@@ -64,6 +64,13 @@ describe("drawNumbers", () => {
     result.games[0].forEach((number) => tails.set(number % 10, (tails.get(number % 10) ?? 0) + 1));
     expect(Math.max(...tails.values())).toBeLessThanOrEqual(2);
     expect(result.appliedChips).toContain("끝수 2개 이하");
+  });
+
+  it("궁합수 기준 번호를 포함하고 조건 칩을 기록한다", () => {
+    const result = drawNumbers({ ...base, conditions: { pair: { base: [7], topK: 20 } } }, context);
+    expect(result.games).toHaveLength(1);
+    expect(result.games[0]).toContain(7);
+    expect(result.appliedChips).toContain("궁합수 · 기준 7 · 상위 20개");
   });
 
   it("고급 조건 충돌 시 완화 안내를 제안한다", () => {

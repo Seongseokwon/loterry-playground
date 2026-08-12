@@ -1,5 +1,6 @@
 import { randomInt } from "./random";
-import type { DrawContext, DrawRequest, DrawResult, LottoNumber, NumberStat } from "./types";
+import { pairStats as aggregatePairStats } from "./stats";
+import type { DrawContext, DrawRequest, DrawResult, LottoNumber, NumberStat, PairStat } from "./types";
 
 // TODO: W2에 실데이터로 튜닝
 export const HOT_WEIGHT = { low: 1.3, mid: 2, high: 3 } as const;
@@ -54,6 +55,7 @@ function chipLabels(request: DrawRequest) {
   if (conditions.hot) chips.push(`핫넘버 · 최근 ${conditions.hot.window || "전체"}회 · ${conditions.hot.weight === "low" ? "약" : conditions.hot.weight === "mid" ? "중" : "강"}`);
   if (conditions.cold) chips.push(`미출현 · 상위 ${conditions.cold.poolSize}개`);
   if (conditions.carryover) chips.push(`이월수 ${conditions.carryover.count}개`);
+  if (conditions.pair) chips.push(`궁합수${conditions.pair.base.length ? ` · 기준 ${conditions.pair.base.join(", ")}` : ""} · 상위 ${conditions.pair.topK}개`);
   if (conditions.oddCount !== undefined) chips.push(`홀짝 ${conditions.oddCount}:${6 - conditions.oddCount}`);
   if (conditions.lowCount !== undefined) chips.push(`고저 ${conditions.lowCount}:${6 - conditions.lowCount}`);
   if (conditions.sumRange) chips.push(`합계 ${conditions.sumRange[0]}~${conditions.sumRange[1]}`);
@@ -73,20 +75,38 @@ function relaxationSuggestions(request: DrawRequest) {
   if (request.conditions.lowCount !== undefined) suggestions.push("고저 비율 완화");
   if (request.conditions.sumRange) suggestions.push("합계 구간 넓히기");
   if (request.conditions.maxSameTail !== undefined) suggestions.push("끝수 분산 완화");
+  if (request.conditions.pair) suggestions.push("궁합수 조건 완화");
   if (request.filters.noConsecutive3) suggestions.push("3연속 제외 끄기");
   if (request.filters.noSameTail3) suggestions.push("같은 끝수 필터 끄기");
   return suggestions.length ? suggestions : ["조건 초기화"];
 }
 
+function pairWeightMap(pairStats: PairStat[], base: LottoNumber[], topK: number) {
+  const safeTopK = Number.isInteger(topK) ? Math.max(1, Math.min(topK, pairStats.length)) : pairStats.length;
+  const baseSet = new Set(base);
+  const relevant = baseSet.size
+    ? base.flatMap((number) => pairStats.filter((stat) => stat.numbers.includes(number)).slice(0, safeTopK))
+    : pairStats.slice(0, safeTopK);
+  const weights = new Map<number, number>();
+  for (const stat of relevant) {
+    for (const number of stat.numbers) {
+      if (!baseSet.has(number)) weights.set(number, (weights.get(number) ?? 0) + stat.count);
+    }
+  }
+  return weights;
+}
+
 export function drawNumbers(request: DrawRequest, context: DrawContext): DrawResult {
   const fixed = [...new Set(request.conditions.fixed ?? [])].filter((number) => Number.isInteger(number) && number >= 1 && number <= 45);
+  const pairBase = [...new Set(request.conditions.pair?.base ?? [])].filter((number) => Number.isInteger(number) && number >= 1 && number <= 45);
+  const anchors = [...new Set([...fixed, ...pairBase])];
   const excluded = new Set((request.conditions.excluded ?? []).filter((number) => Number.isInteger(number) && number >= 1 && number <= 45));
   const relaxed: string[] = [];
-  for (const number of fixed) {
+  for (const number of anchors) {
     if (excluded.delete(number)) relaxed.push(`넣을 번호 ${number}을(를) 뺄 번호보다 우선했어요`);
   }
   const available = ALL_NUMBERS.filter((number) => !excluded.has(number));
-  if (fixed.length > 5 || available.length < 6 || fixed.some((number) => !available.includes(number))) {
+  if (fixed.length > 5 || anchors.length > 6 || available.length < 6 || anchors.some((number) => !available.includes(number))) {
     return { games: [], appliedChips: chipLabels(request), attempts: 0, relaxed: [...relaxed, ...relaxationSuggestions(request)] };
   }
 
@@ -95,10 +115,14 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
     [...context.stats].sort((a, b) => statValue(b, request.conditions.hot!.window) - statValue(a, request.conditions.hot!.window)).slice(0, 15).forEach((stat) => hotTop.add(stat.number));
   }
   const coldTop = new Set([...context.stats].sort((a, b) => b.gap - a.gap).slice(0, request.conditions.cold?.poolSize ?? 0).map((stat) => stat.number));
+  const pairs = context.pairStats?.length ? context.pairStats : request.conditions.pair ? aggregatePairStats(context.pastDraws) : [];
+  const pairWeights = request.conditions.pair ? pairWeightMap(pairs, pairBase, request.conditions.pair.topK) : new Map<number, number>();
+  const maxPairWeight = Math.max(...pairWeights.values(), 0);
   const weightFor = (number: number) => {
     let weight = 1;
     if (request.conditions.hot && hotTop.has(number)) weight *= HOT_WEIGHT[request.conditions.hot.weight];
     if (request.conditions.cold && coldTop.has(number)) weight *= 2;
+    if (request.conditions.pair && pairWeights.has(number)) weight *= 1 + ((pairWeights.get(number) ?? 0) / Math.max(maxPairWeight, 1)) * 2;
     return weight;
   };
 
@@ -109,7 +133,7 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
 
   while (games.length < request.games && attempts < MAX_ATTEMPTS) {
     attempts += 1;
-    const selected = [...fixed];
+    const selected = [...anchors];
     const carryTarget = request.conditions.carryover?.count ?? 0;
     const alreadyCarry = selected.filter((number) => context.latestDraw.numbers.includes(number)).length;
     const carryNeeded = Math.max(0, carryTarget - alreadyCarry);
