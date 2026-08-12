@@ -4,7 +4,7 @@ export const ARCHIVE_LIMIT = 50;
 
 const DB_NAME = "lotto-play-ground";
 const STORE_NAME = "saved-sets";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export type SavedSetNumbers = [LottoNumber, LottoNumber, LottoNumber, LottoNumber, LottoNumber, LottoNumber];
 
@@ -17,10 +17,12 @@ export interface SavedSet {
   memo: string;
   targetRound: number;
   createdAt: string;
+  updatedAt: string;
+  deletedAt?: string;
   presetId?: string;
 }
 
-export type SavedSetInput = Omit<SavedSet, "id" | "createdAt">;
+export type SavedSetInput = Omit<SavedSet, "id" | "createdAt" | "updatedAt" | "deletedAt">;
 
 export type SaveSetResult =
   | { status: "saved"; item: SavedSet; removed?: SavedSet }
@@ -47,8 +49,24 @@ function openDatabase(): Promise<IDBDatabase> {
 
   return new Promise((resolve, reject) => {
     const request = window.indexedDB.open(DB_NAME, DB_VERSION);
-    request.onupgradeneeded = () => {
-      if (!request.result.objectStoreNames.contains(STORE_NAME)) request.result.createObjectStore(STORE_NAME, { keyPath: "id" });
+    request.onupgradeneeded = (event) => {
+      const database = request.result;
+      const transaction = request.transaction;
+      const store = database.objectStoreNames.contains(STORE_NAME)
+        ? transaction?.objectStore(STORE_NAME)
+        : database.createObjectStore(STORE_NAME, { keyPath: "id" });
+
+      if (event.oldVersion < 2 && store) {
+        const cursorRequest = store.openCursor();
+        cursorRequest.onsuccess = () => {
+          const cursor = cursorRequest.result;
+          if (!cursor) return;
+
+          const value = cursor.value as SavedSet;
+          if (!value.updatedAt) cursor.update({ ...value, updatedAt: value.createdAt });
+          cursor.continue();
+        };
+      }
     };
     request.onsuccess = () => resolve(request.result);
     request.onerror = () => reject(request.error ?? new Error("보관함을 열 수 없습니다."));
@@ -73,6 +91,7 @@ function transactionComplete(transaction: IDBTransaction) {
 function normalizeInput(input: SavedSetInput): SavedSet {
   const numbers = [...new Set(input.numbers)].filter((number) => Number.isInteger(number) && number >= 1 && number <= 45).sort((a, b) => a - b);
   if (numbers.length !== 6) throw new TypeError("보관함에는 중복 없는 1~45 번호 6개만 저장할 수 있습니다.");
+  const now = new Date().toISOString();
 
   return {
     ...input,
@@ -82,7 +101,8 @@ function normalizeInput(input: SavedSetInput): SavedSet {
     label: input.label.trim().slice(0, 80) || "저장한 번호",
     memo: input.memo.trim().slice(0, 200),
     targetRound: Math.max(1, Math.trunc(input.targetRound)),
-    createdAt: new Date().toISOString(),
+    createdAt: now,
+    updatedAt: now,
   };
 }
 
@@ -91,8 +111,8 @@ export async function getSavedSets(): Promise<SavedSet[]> {
   const database = await openDatabase();
   try {
     const transaction = database.transaction(STORE_NAME, "readonly");
-    const items = await requestResult(transaction.objectStore(STORE_NAME).getAll());
-    return items.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+    const items = await requestResult(transaction.objectStore(STORE_NAME).getAll()) as SavedSet[];
+    return items.filter((item) => !item.deletedAt).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
   } finally {
     database.close();
   }
@@ -108,7 +128,10 @@ export async function saveSavedSet(input: SavedSetInput, options: { replaceOldes
   try {
     const transaction = database.transaction(STORE_NAME, "readwrite");
     const store = transaction.objectStore(STORE_NAME);
-    if (oldest && current.length >= ARCHIVE_LIMIT && options.replaceOldest) store.delete(oldest.id);
+    if (oldest && current.length >= ARCHIVE_LIMIT && options.replaceOldest) {
+      const now = new Date().toISOString();
+      store.put({ ...oldest, updatedAt: now, deletedAt: now });
+    }
     store.put(item);
     await transactionComplete(transaction);
     return { status: "saved", item, removed: oldest && current.length >= ARCHIVE_LIMIT ? oldest : undefined };
@@ -122,7 +145,12 @@ export async function deleteSavedSet(id: string) {
   const database = await openDatabase();
   try {
     const transaction = database.transaction(STORE_NAME, "readwrite");
-    transaction.objectStore(STORE_NAME).delete(id);
+    const store = transaction.objectStore(STORE_NAME);
+    const item = await requestResult(store.get(id)) as SavedSet | undefined;
+    if (item) {
+      const now = new Date().toISOString();
+      store.put({ ...item, updatedAt: now, deletedAt: now });
+    }
     await transactionComplete(transaction);
   } finally {
     database.close();
