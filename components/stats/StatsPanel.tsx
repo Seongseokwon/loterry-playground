@@ -19,15 +19,28 @@ function formatWon(amount: number) {
   return `${Math.round(amount / 10_000).toLocaleString("ko-KR")}만원`;
 }
 
-function DistributionCard({ title, description, firstLabel, secondLabel, items }: {
+function RoundLinks({ draws, label }: { draws: Draw[]; label: string }) {
+  return (
+    <div className="stats-round-links">
+      <div className="section-head"><h4>{label}</h4><span className="body-small">{draws.length}회</span></div>
+      {draws.map((draw) => <Link href={`/results/${draw.round}`} className="sum-round-row" key={draw.round}><span>제{draw.round}회 · {draw.date}</span><strong>{drawSum(draw)}점</strong></Link>)}
+    </div>
+  );
+}
+
+function DistributionCard({ title, description, firstLabel, secondLabel, items, draws, countFor }: {
   title: string;
   description: string;
   firstLabel: string;
   secondLabel: string;
   items: { label: string; count: number }[];
+  draws: Draw[];
+  countFor: (draw: Draw) => number;
 }) {
+  const [selectedLabel, setSelectedLabel] = useState<string | null>(null);
   const maxCount = Math.max(...items.map((item) => item.count), 1);
   const total = items.reduce((sum, item) => sum + item.count, 0);
+  const selectedDraws = selectedLabel ? draws.filter((draw) => countFor(draw) === Number(selectedLabel.split(":")[0])) : [];
   return (
     <section className="card distribution-card">
       <div className="section-head"><div><h3>{title}</h3><p className="body-small">{description}</p></div></div>
@@ -35,18 +48,19 @@ function DistributionCard({ title, description, firstLabel, secondLabel, items }
         {items.map((item) => {
           const firstCount = Number(item.label.split(":")[0]);
           return (
-            <div className="distribution-row" key={item.label}>
+            <button type="button" className={`distribution-row ${selectedLabel === item.label ? "distribution-row-active" : ""}`} key={item.label} aria-pressed={selectedLabel === item.label} onClick={() => setSelectedLabel((current) => current === item.label ? null : item.label)}>
               <span className="distribution-label">{item.label}</span>
               <span className="distribution-track" style={{ "--distribution-height": `${Math.max(10, (item.count / maxCount) * 100)}%` } as CSSProperties}>
                 <span className="distribution-segment distribution-first" style={{ width: `${(firstCount / 6) * 100}%` }}><span className="sr-only">{firstLabel} {firstCount}개</span></span>
                 <span className="distribution-segment distribution-second" style={{ width: `${((6 - firstCount) / 6) * 100}%` }}><span className="sr-only">{secondLabel} {6 - firstCount}개</span></span>
               </span>
               <strong>{item.count}회</strong>
-            </div>
+            </button>
           );
         })}
       </div>
       <p className="body-small distribution-legend"><span><i className="legend-dot legend-first" />{firstLabel}</span><span><i className="legend-dot legend-second" />{secondLabel}</span><span>합계 {total}회</span></p>
+      {selectedLabel && <RoundLinks draws={selectedDraws} label={`${firstLabel}:${secondLabel} ${selectedLabel} 회차`} />}
     </section>
   );
 }
@@ -87,6 +101,7 @@ function SumDistribution({ draws }: { draws: Draw[] }) {
 }
 
 function FirstPrizeTrend({ draws }: { draws: Draw[] }) {
+  const [selectedRound, setSelectedRound] = useState<number | null>(null);
   const trendDraws = [...draws].filter((draw) => typeof draw.firstWinAmount === "number").sort((a, b) => a.round - b.round);
   const amounts = trendDraws.map((draw) => draw.firstWinAmount as number);
   const min = Math.min(...amounts);
@@ -96,16 +111,25 @@ function FirstPrizeTrend({ draws }: { draws: Draw[] }) {
     const y = 90 - (((draw.firstWinAmount as number) - min) / Math.max(max - min, 1)) * 75;
     return `${x.toFixed(2)},${y.toFixed(2)}`;
   }).join(" ");
+  const selectedDraw = selectedRound === null ? null : trendDraws.find((draw) => draw.round === selectedRound) ?? null;
   return (
     <section className="section card prize-trend-card">
       <div className="section-head"><div><h3>1등 당첨금 추이</h3><p className="body-small">선택한 회차의 1등 1인당 당첨금 · 오래된 회차에서 최신 회차 순</p></div></div>
       {trendDraws.length > 0 ? (
         <>
-          <div className="prize-chart" role="img" aria-label={`1등 당첨금 추이, 최저 ${formatWon(min)}, 최고 ${formatWon(max)}`}>
-            <svg viewBox="0 0 100 100" preserveAspectRatio="none" aria-hidden="true"><polyline points={points} fill="none" vectorEffect="non-scaling-stroke" /></svg>
+          <div className="prize-chart" role="group" aria-label={`1등 당첨금 추이, 최저 ${formatWon(min)}, 최고 ${formatWon(max)}`}>
+            <svg viewBox="0 0 100 100" preserveAspectRatio="none">
+              <polyline points={points} fill="none" vectorEffect="non-scaling-stroke" aria-hidden="true" />
+              {trendDraws.map((draw, index) => {
+                const x = trendDraws.length <= 1 ? 50 : (index / (trendDraws.length - 1)) * 100;
+                const y = 90 - (((draw.firstWinAmount as number) - min) / Math.max(max - min, 1)) * 75;
+                return <circle className={selectedRound === draw.round ? "prize-point prize-point-active" : "prize-point"} key={draw.round} cx={x} cy={y} r={selectedRound === draw.round ? 2.8 : 1.7} tabIndex={0} role="button" aria-label={`제${draw.round}회 ${formatWon(draw.firstWinAmount as number)}, 1등 ${draw.firstWinners ?? "-"}명`} onClick={() => setSelectedRound(draw.round)} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedRound(draw.round); } }}><title>제{draw.round}회 · {formatWon(draw.firstWinAmount as number)} · 1등 {draw.firstWinners ?? "-"}명</title></circle>;
+              })}
+            </svg>
           </div>
           <div className="prize-chart-labels"><span>최저 {formatWon(min)}</span><span>최고 {formatWon(max)}</span></div>
           <p className="body-small">제{trendDraws[0].round}회 {formatWon(trendDraws[0].firstWinAmount as number)} · 제{trendDraws[trendDraws.length - 1].round}회 {formatWon(trendDraws[trendDraws.length - 1].firstWinAmount as number)}</p>
+          {selectedDraw && <div className="prize-selected"><div><strong>제{selectedDraw.round}회 · {selectedDraw.date}</strong><p className="body-small">1등 {formatWon(selectedDraw.firstWinAmount as number)} · {selectedDraw.firstWinners ?? "-"}명</p></div><Link href={`/results/${selectedDraw.round}`} className="text-link">결과 보기 →</Link></div>}
         </>
       ) : <p className="body-small">선택한 회차에는 당첨금 데이터가 없어요.</p>}
     </section>
@@ -150,8 +174,8 @@ export function StatsPanel() {
       </section>
 
       <section className="section distribution-grid">
-        <DistributionCard title="홀짝 분포" description={`${rangeLabel} 기준 홀수:짝수 조합`} firstLabel="홀수" secondLabel="짝수" items={oddEvenDistribution(selectedDraws)} />
-        <DistributionCard title="고저 분포" description={`${rangeLabel} 기준 낮은 번호:높은 번호 · 기준 1~22/23~45`} firstLabel="낮은 번호" secondLabel="높은 번호" items={lowHighDistribution(selectedDraws)} />
+        <DistributionCard title="홀짝 분포" description={`${rangeLabel} 기준 홀수:짝수 조합`} firstLabel="홀수" secondLabel="짝수" items={oddEvenDistribution(selectedDraws)} draws={selectedDraws} countFor={(draw) => draw.numbers.filter((number) => number % 2 === 1).length} />
+        <DistributionCard title="고저 분포" description={`${rangeLabel} 기준 낮은 번호:높은 번호 · 기준 1~22/23~45`} firstLabel="낮은 번호" secondLabel="높은 번호" items={lowHighDistribution(selectedDraws)} draws={selectedDraws} countFor={(draw) => draw.numbers.filter((number) => number <= 22).length} />
       </section>
 
       <SumDistribution draws={selectedDraws} />
