@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 export default function NotFound() {
   return (
     <div className="page page-narrow status-page">
@@ -8,8 +10,8 @@ export default function NotFound() {
         <p className="body-color">주소가 바뀌었거나 존재하지 않는 페이지예요. 홈에서 다시 시작해 주세요.</p>
       </div>
       <div className="status-actions">
-        <a className="product-button product-large product-primary" href="/">홈으로 돌아가기</a>
-        <a className="product-button product-large product-weak" href="/results">당첨번호 보기</a>
+        <Link className="product-button product-large product-primary" href="/">홈으로 돌아가기</Link>
+        <Link className="product-button product-large product-weak" href="/results">당첨번호 보기</Link>
       </div>
     </div>
   );

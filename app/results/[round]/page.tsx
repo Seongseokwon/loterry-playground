@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BallRow } from "@/components/lotto/BallRow";
 import { Badge } from "@/components/ui/Badge";
@@ -32,8 +33,8 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ r
         <dl><div><dt>당첨자</dt><dd>{draw.firstWinners}명</dd></div><div><dt>1인당 당첨금</dt><dd>{formatWon(draw.firstWinAmount)}</dd></div><div><dt>총 판매금액</dt><dd>{formatWon(draw.totalSell)}</dd></div></dl>
       </section>
       <div className="detail-nav">
-        {older ? <a href={`/results/${older.round}`}>← 제{older.round}회</a> : <span />}
-        {newer ? <a href={`/results/${newer.round}`}>제{newer.round}회 →</a> : <span />}
+        {older ? <Link href={`/results/${older.round}`}>← 제{older.round}회</Link> : <span />}
+        {newer ? <Link href={`/results/${newer.round}`}>제{newer.round}회 →</Link> : <span />}
       </div>
       <section className="official-note card card-weak">
         <div><strong>결과는 공식 사이트에서도 확인해 주세요</strong><p className="body-small">동행복권 공개 회차 데이터를 수집해 제공합니다.</p></div>

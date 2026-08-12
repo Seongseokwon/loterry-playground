@@ -12,11 +12,11 @@ function collectTsxFiles(directory: string): string[] {
 }
 
 describe("navigation contract", () => {
-  it("uses browser-native internal links throughout the app", () => {
+  it("uses Next.js client navigation for internal links", () => {
     const files = [join(root, "app"), join(root, "components")].flatMap(collectTsxFiles);
     const violations = files.flatMap((file) => {
       const source = readFileSync(file, "utf8");
-      return source.includes('from "next/link"') || source.includes("<Link") ? [relative(root, file)] : [];
+      return /<a\b[^>]*\bhref\s*=\s*(?:"\/|\{\s*[`"]\/)/.test(source) ? [relative(root, file)] : [];
     });
 
     expect(violations).toEqual([]);
