@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect } from "react";
 
 export default function ErrorPage({ error, reset }: { error: Error & { digest?: string }; reset: () => void }) {
@@ -17,7 +18,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
       </div>
       <div className="status-actions">
         <button className="product-button product-large product-primary" type="button" onClick={reset}>다시 시도</button>
-        <a className="product-button product-large product-weak" href="/">홈으로 돌아가기</a>
+        <Link className="product-button product-large product-weak" href="/">홈으로 돌아가기</Link>
       </div>
     </div>
   );
