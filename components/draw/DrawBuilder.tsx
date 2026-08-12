@@ -161,6 +161,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           <PresetCard href="/draw/carryover" icon="carryover" title="이월수" description="직전 회차 1개" active={preset === "carryover"} />
           <PresetCard href="/draw/pair" icon="hot" title="궁합수" description="동시출현 Top K" active={preset === "pair"} />
           <PresetCard href="/draw/birthday" icon="fixed" title="기념일" description="날짜를 번호로" active={preset === "birthday"} />
+          <PresetCard href="/draw/next-pattern" icon="next-pattern" title="다음 패턴" description="전이 분석 · 준비 중" />
         </div>
       </section>
 

@@ -39,6 +39,13 @@
 .official-note { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 
 .draw-intro { display: flex; flex-direction: column; gap: 6px; }
+.next-pattern-preview { display: flex; flex-direction: column; align-items: center; gap: 14px; margin-top: 28px; padding: 40px 28px; text-align: center; }
+.next-pattern-preview-icon { width: 128px; height: 128px; object-fit: contain; }
+.next-pattern-preview h2 { margin: 0; }
+.next-pattern-preview p { max-width: 480px; }
+.next-pattern-example { display: flex; align-items: center; gap: 12px; margin: 4px 0; color: var(--color-body); font-size: 15px; font-weight: 700; }
+.next-pattern-example strong { color: var(--color-primary); font-size: 22px; }
+.next-pattern-example-highlight { padding: 7px 10px; border-radius: var(--radius-btn-s); background: var(--color-weak-bg); color: var(--color-weak-fg); }
 .preset-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .preset-description { display: flex; align-items: flex-start; gap: 14px; }
 .preset-description .badge { flex: 0 0 auto; white-space: nowrap; }
@@ -222,6 +229,7 @@
   .preset-grid { grid-template-columns: repeat(3, 1fr); }
   .preset-grid .preset-card:nth-child(n+4) { min-height: 112px; }
   .preset-description { flex-direction: column; }
+  .next-pattern-preview { padding: 32px 20px; }
   .result-game { align-items: flex-start; flex-direction: column; }
   .check-layout { grid-template-columns: 1fr; }
   .check-result { position: static; }
