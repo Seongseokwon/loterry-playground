@@ -54,6 +54,10 @@ function chipLabels(request: DrawRequest) {
   if (conditions.hot) chips.push(`핫넘버 · 최근 ${conditions.hot.window || "전체"}회 · ${conditions.hot.weight === "low" ? "약" : conditions.hot.weight === "mid" ? "중" : "강"}`);
   if (conditions.cold) chips.push(`미출현 · 상위 ${conditions.cold.poolSize}개`);
   if (conditions.carryover) chips.push(`이월수 ${conditions.carryover.count}개`);
+  if (conditions.oddCount !== undefined) chips.push(`홀짝 ${conditions.oddCount}:${6 - conditions.oddCount}`);
+  if (conditions.lowCount !== undefined) chips.push(`고저 ${conditions.lowCount}:${6 - conditions.lowCount}`);
+  if (conditions.sumRange) chips.push(`합계 ${conditions.sumRange[0]}~${conditions.sumRange[1]}`);
+  if (conditions.maxSameTail !== undefined) chips.push(`끝수 ${conditions.maxSameTail}개 이하`);
   if (filters.noConsecutive3) chips.push("3연속 번호 제외");
   if (filters.noPastJackpot) chips.push("과거 1등 조합 제외");
   if (filters.noSameTail3) chips.push("같은 끝수 3개 제외");
@@ -65,6 +69,10 @@ function relaxationSuggestions(request: DrawRequest) {
   if (request.conditions.excluded?.length) suggestions.push("뺄 번호 줄이기");
   if (request.conditions.fixed?.length) suggestions.push("넣을 번호 줄이기");
   if (request.conditions.carryover) suggestions.push("이월수 끄기");
+  if (request.conditions.oddCount !== undefined) suggestions.push("홀짝 비율 완화");
+  if (request.conditions.lowCount !== undefined) suggestions.push("고저 비율 완화");
+  if (request.conditions.sumRange) suggestions.push("합계 구간 넓히기");
+  if (request.conditions.maxSameTail !== undefined) suggestions.push("끝수 분산 완화");
   if (request.filters.noConsecutive3) suggestions.push("3연속 제외 끄기");
   if (request.filters.noSameTail3) suggestions.push("같은 끝수 필터 끄기");
   return suggestions.length ? suggestions : ["조건 초기화"];

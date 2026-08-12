@@ -51,13 +51,13 @@ vinext/Cloudflare 시절 구조. 파일이 0개인데 남아 있다.
 
 `lib/draw-engine.ts`에 판정 로직이 **이미 구현되어 있다**(39~42행). `DrawConditions` 타입에도 필드가 있다. 남은 건 `components/draw/DrawBuilder.tsx`에 아코디언을 여는 것뿐.
 
-- [ ] "고급 조건" 아코디언 컴포넌트 (기본 접힘 — 초심자 진입장벽 고려)
-- [ ] 홀짝 비율 — `oddCount` 0~6 세그먼트
-- [ ] 고저 비율 — `lowCount` 0~6 세그먼트 (기준: 1~22 / 23~45)
-- [ ] 합계 구간 — `sumRange` 프리셋(120~160 / 100~180) + 직접 입력(21~255)
-- [ ] 끝수 분산 — `maxSameTail` 1개 / 2개
-- [ ] 조건 충돌 시 완화 안내 — `relaxed` 배지 흐름에 신규 조건 반영
-- [ ] `tests/draw-engine.test.ts`에 4종 조건 케이스 추가
+- [x] "고급 조건" 아코디언 컴포넌트 (기본 접힘 — 초심자 진입장벽 고려)
+- [x] 홀짝 비율 — `oddCount` 0~6 세그먼트
+- [x] 고저 비율 — `lowCount` 0~6 세그먼트 (기준: 1~22 / 23~45)
+- [x] 합계 구간 — `sumRange` 프리셋(120~160 / 100~180) + 직접 입력(21~255)
+- [x] 끝수 분산 — `maxSameTail` 1개 / 2개
+- [x] 조건 충돌 시 완화 안내 — `relaxed` 배지 흐름에 신규 조건 반영
+- [x] `tests/draw-engine.test.ts`에 4종 조건 케이스 추가
 
 ### B-2. 보관함 (IndexedDB)
 

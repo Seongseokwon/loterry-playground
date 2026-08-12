@@ -44,6 +44,23 @@
 .number-picker { margin-top: 20px; }
 .number-picker .number-grid { margin: 0 auto; }
 .filter-card { display: flex; flex-direction: column; gap: 18px; }
+.advanced-conditions { padding: 0; overflow: hidden; }
+.advanced-summary { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 20px 24px; cursor: pointer; list-style: none; }
+.advanced-summary::-webkit-details-marker { display: none; }
+.advanced-summary::after { content: "⌄"; color: var(--color-muted); font-size: 22px; line-height: 1; transition: transform 180ms ease; }
+.advanced-conditions[open] .advanced-summary::after { transform: rotate(180deg); }
+.advanced-summary h3 { margin-bottom: 4px; }
+.advanced-content { display: grid; gap: 24px; padding: 0 24px 24px; border-top: 1px solid var(--color-border); }
+.advanced-group { min-width: 0; padding: 24px 0 0; border: 0; }
+.advanced-group + .advanced-group { border-top: 1px solid var(--color-border); }
+.advanced-group legend { display: flex; align-items: center; gap: 8px; padding: 0; color: var(--color-foreground); font-weight: 700; }
+.advanced-group legend img { width: 30px; height: 30px; object-fit: contain; }
+.advanced-group > .body-small { margin: 6px 0 12px 38px; }
+.advanced-group .segmented { width: fit-content; max-width: 100%; overflow-x: auto; }
+.advanced-range { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
+.advanced-range label { display: flex; align-items: center; gap: 6px; color: var(--color-body); font-size: 14px; font-weight: 600; }
+.advanced-range input { width: 84px; height: 40px; padding: 0 10px; border: 1px solid var(--color-border); border-radius: var(--radius-btn-s); background: var(--color-canvas); color: var(--color-foreground); font: inherit; }
+.advanced-range-separator { color: var(--color-muted); }
 .game-count { display: flex; flex-wrap: wrap; gap: 14px; padding: 16px 0 0; border: 0; border-top: 1px solid var(--color-border); }
 .game-count legend { width: 100%; margin-bottom: 8px; font-weight: 600; }
 .game-count label { min-height: 44px; display: flex; align-items: center; gap: 7px; }
