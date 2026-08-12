@@ -11,9 +11,12 @@ import { ResultSheet } from "@/components/lotto/ResultSheet";
 import { lottoDraws } from "@/data/draws";
 import { drawNumbers } from "@/lib/draw-engine";
 import { aggregateNumberStats } from "@/lib/stats";
-import type { DrawRequest, DrawResult } from "@/lib/types";
+import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 
 type Preset = "random" | "hot" | "cold" | "fixed" | "carryover";
+type SumMode = "none" | "narrow" | "wide" | "custom";
+
+const COUNT_OPTIONS = [0, 1, 2, 3, 4, 5, 6] as const;
 
 const presetCopy: Record<Preset, { title: string; copy: string }> = {
   random: { title: "완전 랜덤", copy: "아무 조건도 더하지 않고 1부터 45까지 같은 기회로 여섯 번호를 골라요. 기본 필터만 적용되며, 언제든 다른 조건을 함께 켤 수 있어요." },
@@ -33,10 +36,17 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [noConsecutive3, setNoConsecutive3] = useState(true);
   const [noPastJackpot, setNoPastJackpot] = useState(true);
   const [noSameTail3, setNoSameTail3] = useState(false);
+  const [oddCount, setOddCount] = useState<DrawConditions["oddCount"]>();
+  const [lowCount, setLowCount] = useState<DrawConditions["lowCount"]>();
+  const [sumMode, setSumMode] = useState<SumMode>("none");
+  const [sumMin, setSumMin] = useState(21);
+  const [sumMax, setSumMax] = useState(255);
+  const [maxSameTail, setMaxSameTail] = useState<DrawConditions["maxSameTail"]>();
   const [games, setGames] = useState<1 | 5>(1);
   const [result, setResult] = useState<DrawResult | null>(null);
   const [saved, setSaved] = useState(false);
   const stats = useMemo(() => aggregateNumberStats(lottoDraws), []);
+  const sumRange: [number, number] | undefined = sumMode === "none" ? undefined : sumMode === "narrow" ? [120, 160] : sumMode === "wide" ? [100, 180] : [sumMin, sumMax];
 
   const request = (): DrawRequest => ({
     conditions: {
@@ -45,6 +55,10 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       hot: hot ? { window: 30, weight: "mid" } : undefined,
       cold: cold ? { poolSize: 20 } : undefined,
       carryover: carryover ? { count: 1 } : undefined,
+      oddCount,
+      lowCount,
+      sumRange,
+      maxSameTail,
     },
     filters: { noConsecutive3, noPastJackpot, noSameTail3 },
     games,
@@ -58,6 +72,18 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
 
   const toggleFixed = (number: number) => setFixed((current) => current.includes(number) ? current.filter((item) => item !== number) : current.length < 5 ? [...current, number].sort((a, b) => a - b) : current);
   const toggleExcluded = (number: number) => setExcluded((current) => current.includes(number) ? current.filter((item) => item !== number) : [...current, number].sort((a, b) => a - b));
+  const updateSumMin = (value: number) => {
+    if (!Number.isFinite(value)) return;
+    const next = Math.min(255, Math.max(21, value));
+    setSumMin(Math.min(next, sumMax));
+    setSumMode("custom");
+  };
+  const updateSumMax = (value: number) => {
+    if (!Number.isFinite(value)) return;
+    const next = Math.min(255, Math.max(21, value));
+    setSumMax(Math.max(next, sumMin));
+    setSumMode("custom");
+  };
   const failed = result && result.games.length === 0;
 
   return (
@@ -109,6 +135,70 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
             )}
           </div>
         )}
+      </section>
+
+      <section className="section">
+        <details className="card advanced-conditions">
+          <summary className="advanced-summary">
+            <div>
+              <h3>고급 조건</h3>
+              <p className="body-small">홀짝·고저·합계·끝수까지 더 세밀하게 맞춰요. 기본은 제한 없음이에요.</p>
+            </div>
+            <span className="body-small">선택 사항</span>
+          </summary>
+          <div className="advanced-content">
+            <fieldset className="advanced-group">
+              <legend><img src="/icons/condition-odd-even.png" alt="" aria-hidden="true" />홀짝 비율</legend>
+              <p className="body-small">홀수 개수와 짝수 개수를 정해요.</p>
+              <div className="segmented" role="group" aria-label="홀짝 비율">
+                <button type="button" className={oddCount === undefined ? "segment-on" : ""} aria-pressed={oddCount === undefined} onClick={() => setOddCount(undefined)}>제한 없음</button>
+                {COUNT_OPTIONS.map((count) => (
+                  <button type="button" className={oddCount === count ? "segment-on" : ""} aria-pressed={oddCount === count} aria-label={`${count}개 홀수, ${6 - count}개 짝수`} key={count} onClick={() => setOddCount(count)}>{count}:{6 - count}</button>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="advanced-group">
+              <legend><img src="/icons/condition-low-high.png" alt="" aria-hidden="true" />고저 비율</legend>
+              <p className="body-small">낮은 번호는 1~22, 높은 번호는 23~45예요.</p>
+              <div className="segmented" role="group" aria-label="고저 비율">
+                <button type="button" className={lowCount === undefined ? "segment-on" : ""} aria-pressed={lowCount === undefined} onClick={() => setLowCount(undefined)}>제한 없음</button>
+                {COUNT_OPTIONS.map((count) => (
+                  <button type="button" className={lowCount === count ? "segment-on" : ""} aria-pressed={lowCount === count} aria-label={`${count}개 낮은 번호, ${6 - count}개 높은 번호`} key={count} onClick={() => setLowCount(count)}>{count}:{6 - count}</button>
+                ))}
+              </div>
+            </fieldset>
+
+            <fieldset className="advanced-group">
+              <legend><img src="/icons/condition-sum.png" alt="" aria-hidden="true" />합계 구간</legend>
+              <p className="body-small">여섯 번호의 합계를 원하는 범위 안에서 골라요.</p>
+              <div className="segmented" role="group" aria-label="합계 구간">
+                <button type="button" className={sumMode === "none" ? "segment-on" : ""} aria-pressed={sumMode === "none"} onClick={() => setSumMode("none")}>제한 없음</button>
+                <button type="button" className={sumMode === "narrow" ? "segment-on" : ""} aria-pressed={sumMode === "narrow"} onClick={() => setSumMode("narrow")}>120~160</button>
+                <button type="button" className={sumMode === "wide" ? "segment-on" : ""} aria-pressed={sumMode === "wide"} onClick={() => setSumMode("wide")}>100~180</button>
+                <button type="button" className={sumMode === "custom" ? "segment-on" : ""} aria-pressed={sumMode === "custom"} onClick={() => setSumMode("custom")}>직접 입력</button>
+              </div>
+              {sumMode === "custom" && (
+                <div className="advanced-range">
+                  <label>최소 <input type="number" min="21" max="255" value={sumMin} aria-label="합계 최솟값" onChange={(event) => updateSumMin(event.currentTarget.valueAsNumber)} /></label>
+                  <span className="advanced-range-separator" aria-hidden="true">~</span>
+                  <label>최대 <input type="number" min="21" max="255" value={sumMax} aria-label="합계 최댓값" onChange={(event) => updateSumMax(event.currentTarget.valueAsNumber)} /></label>
+                  <span className="body-small">21~255</span>
+                </div>
+              )}
+            </fieldset>
+
+            <fieldset className="advanced-group">
+              <legend><img src="/icons/condition-tail.png" alt="" aria-hidden="true" />끝수 분산</legend>
+              <p className="body-small">같은 일의 자리 숫자가 너무 많이 겹치지 않게 해요.</p>
+              <div className="segmented" role="group" aria-label="끝수 분산">
+                <button type="button" className={maxSameTail === undefined ? "segment-on" : ""} aria-pressed={maxSameTail === undefined} onClick={() => setMaxSameTail(undefined)}>제한 없음</button>
+                <button type="button" className={maxSameTail === 1 ? "segment-on" : ""} aria-pressed={maxSameTail === 1} onClick={() => setMaxSameTail(1)}>1개 이하</button>
+                <button type="button" className={maxSameTail === 2 ? "segment-on" : ""} aria-pressed={maxSameTail === 2} onClick={() => setMaxSameTail(2)}>2개 이하</button>
+              </div>
+            </fieldset>
+          </div>
+        </details>
       </section>
 
       <section className="section filter-card card">

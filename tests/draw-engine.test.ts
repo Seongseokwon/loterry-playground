@@ -33,4 +33,45 @@ describe("drawNumbers", () => {
     const hasConsecutive3 = game.some((number, index) => index <= 3 && game[index + 1] === number + 1 && game[index + 2] === number + 2);
     expect(hasConsecutive3).toBe(false);
   });
+
+  it("홀짝 비율 조건을 지킨다", () => {
+    const result = drawNumbers({ ...base, conditions: { oddCount: 2 } }, context);
+    expect(result.games).toHaveLength(1);
+    expect(result.games[0].filter((number) => number % 2 === 1)).toHaveLength(2);
+    expect(result.appliedChips).toContain("홀짝 2:4");
+  });
+
+  it("고저 비율 조건을 지킨다", () => {
+    const result = drawNumbers({ ...base, conditions: { lowCount: 4 } }, context);
+    expect(result.games).toHaveLength(1);
+    expect(result.games[0].filter((number) => number <= 22)).toHaveLength(4);
+    expect(result.appliedChips).toContain("고저 4:2");
+  });
+
+  it("합계 구간 조건을 지킨다", () => {
+    const result = drawNumbers({ ...base, conditions: { sumRange: [120, 160] } }, context);
+    expect(result.games).toHaveLength(1);
+    const sum = result.games[0].reduce((total, number) => total + number, 0);
+    expect(sum).toBeGreaterThanOrEqual(120);
+    expect(sum).toBeLessThanOrEqual(160);
+    expect(result.appliedChips).toContain("합계 120~160");
+  });
+
+  it("끝수 분산 조건을 지킨다", () => {
+    const result = drawNumbers({ ...base, conditions: { maxSameTail: 2 } }, context);
+    expect(result.games).toHaveLength(1);
+    const tails = new Map<number, number>();
+    result.games[0].forEach((number) => tails.set(number % 10, (tails.get(number % 10) ?? 0) + 1));
+    expect(Math.max(...tails.values())).toBeLessThanOrEqual(2);
+    expect(result.appliedChips).toContain("끝수 2개 이하");
+  });
+
+  it("고급 조건 충돌 시 완화 안내를 제안한다", () => {
+    const result = drawNumbers({
+      ...base,
+      conditions: { fixed: [1, 2, 3, 4, 5, 6], oddCount: 3, lowCount: 3, sumRange: [120, 160], maxSameTail: 1 },
+    }, context);
+    expect(result.games).toEqual([]);
+    expect(result.relaxed).toEqual(expect.arrayContaining(["홀짝 비율 완화", "고저 비율 완화", "합계 구간 넓히기", "끝수 분산 완화"]));
+  });
 });
