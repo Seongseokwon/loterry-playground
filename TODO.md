@@ -1,7 +1,10 @@
 # TODO
 
-기준일: 2026-08-12 · Next.js 16.2.6 / React 19.2.6 마이그레이션 직후
+기준일: 2026-08-12 · Next.js 16.2.6 / React 19.2.6
 데이터: 제1~1236회 (2026-08-08 추첨분까지)
+백엔드 설계: **`BACKEND-PLAN.md`** (Prisma 7 + Prisma Postgres)
+
+**진행 상황** — A 전체 완료 / B-1~B-4 완료 / B-5 4항목 완료, 2항목은 수집기 확장 필요(E-4) / 남은 것은 C, D, E와 B-5 잔여, B-6
 
 ---
 
@@ -22,7 +25,7 @@ Next.js 전환 후 남은 것들. 코드 동작에는 영향 없지만 리포지
 vinext/Cloudflare 시절 구조. 파일이 0개인데 남아 있다.
 
 - [x] `worker/` — Cloudflare Worker 진입점 (미사용)
-- [x] `db/`, `drizzle/` — Drizzle ORM (현재 정적 JSON만 사용, 의존성도 제거됨)
+- [x] `db/`, `drizzle/` — Drizzle ORM 잔재. ORM은 **Prisma로 확정** (`BACKEND-PLAN.md`)
 - [x] `mocks/` — MSW 잔재
 - [x] `build/` — 구 빌드 출력
 - [x] `app/_sites-preview/` — vinext 프리뷰 라우트
@@ -70,6 +73,7 @@ vinext/Cloudflare 시절 구조. 파일이 0개인데 남아 있다.
 - [x] 회차 확정 시 자동 등수 판정 → 보관함 배지 (`lib/rank.ts` 재사용)
 - [x] 50세트 초과 시 처리 정책 (오래된 것부터 안내 후 삭제)
 - [x] SSR 환경 가드 — IndexedDB는 클라이언트 전용
+- [x] **동기화 대비 스키마 보강** — `SavedSet`에 `updatedAt`·`deletedAt` 추가, `DB_VERSION` 1→2, `deleteSavedSet()`을 툼스톤 마킹으로 변경 (`BACKEND-PLAN.md` §7)
 
 ### B-3. 궁합수
 
@@ -96,8 +100,8 @@ vinext/Cloudflare 시절 구조. 파일이 0개인데 남아 있다.
 - [x] 합계 분포 — 히스토그램 + 중앙값 마커, 구간 선택 → 해당 회차 목록
 - [x] 1등 당첨금 추이 — 라인 차트 (`firstWinAmount` 데이터 이미 보유)
 - [x] 번호 상세 시트에 궁합 Top 5 추가 (B-3 선행)
-- [ ] 등위별 당첨금 — 수집기 확장 필요 (현재 1등만 수집)
-- [ ] 1등 배출 판매점 — 별도 수집 엔드포인트 조사 필요
+- [ ] 등위별 당첨금 — 수집기 확장 필요 (현재 1등만 수집). **E-4의 `DrawPrize`와 같이 움직인다**
+- [ ] 1등 배출 판매점 — 공공데이터포털 「기획재정부_온라인복권 1등 당첨 판매점 현황」 개방 데이터 사용 (크롤링 아님). **E-4의 `WinningStore`와 같이 움직인다**
 
 ### B-6. QR 스캔
 
@@ -114,9 +118,9 @@ vinext/Cloudflare 시절 구조. 파일이 0개인데 남아 있다.
 
 기획서 §9는 **최근 104회만** 정적 생성 + 색인하고 나머지는 `noindex` + sitemap 제외로 설계했다. 원본 데이터 재공개 범위를 좁히려는 §7.1 대응책이다.
 
-그런데 `app/results/[round]/page.tsx:9`의 `generateStaticParams`는 **1,236개 회차를 전부 생성**한다. 빌드 시간 문제이자 컴플라이언스 이슈다.
+기존 `app/results/[round]/page.tsx:9`의 `generateStaticParams`는 **1,236개 회차를 전부 생성**했다. 현재는 최근 30회만 사전 생성하고, 이전 회차는 요청 시 생성하되 검색 색인에서 제외한다.
 
-- [ ] 의도한 변경인지 확인 → 아니면 104회로 제한 + 이전 회차는 쿼리 접근 + `noindex`
+- [x] 최근 30회만 정적 생성·색인 + 이전 회차는 필요 시 동적 접근 + `noindex` 처리
 
 ### C-2. 없는 것들
 
@@ -131,17 +135,83 @@ vinext/Cloudflare 시절 구조. 파일이 0개인데 남아 있다.
 
 - [ ] 동행복권 데이터 이용 문의 및 법률 검토 (기획서 §7.1 — 저작권법 제93조)
 - [ ] 이용약관, 개인정보처리방침, 면책 문구 검토
-- [ ] 데이터 주간 자동 갱신 — 현재 `collect-draws.cmd` 수동 실행. 토요일 추첨 후 15분 내 반영이 SLA 목표(99%)
+- [ ] 데이터 주간 자동 갱신 → **E-2로 이관**
 - [ ] 실데이터로 핫넘버 가중치 튜닝
-- [ ] 웹 푸시, 계정 동기화, 분석 이벤트 (v1.2)
+- [ ] 계정 동기화 → **E-3으로 이관**
+- [ ] 웹 푸시, 분석 이벤트 (v1.2)
+
+---
+
+## E. 백엔드 (Prisma 7 + Prisma Postgres)
+
+상세 설계는 **`BACKEND-PLAN.md`**. 여기는 체크리스트만 둔다.
+
+> Prisma 7은 v6와 설정 방식이 크게 다르다 — generator가 `prisma-client`로 바뀌고, `output` 지정이 필수가 되고, 드라이버 어댑터가 필수가 되고, DB URL이 `prisma.config.ts`로 이동했다. 인터넷 예제 대부분이 v6 기준이라 그대로 따라가면 깨진다. `BACKEND-PLAN.md` §2 대조표를 먼저 볼 것.
+
+### E-1. 읽기 경로 이관 (약 1주)
+
+- [ ] `pnpm add prisma tsx -D` / `pnpm add @prisma/client @prisma/adapter-pg dotenv`
+- [ ] `npx prisma init --output ../lib/generated/prisma` → `npx create-db`로 Prisma Postgres 생성
+- [ ] `.env`에 `create-db`가 돌려준 **TCP `postgres://` URL** 기록 (`prisma+postgres://` 아님, 직접 만들어 쓰지 말 것)
+- [ ] `tsconfig.json` target `ES2017` → `ES2023`
+- [ ] `.gitignore`에 `/lib/generated/` 추가, `eslint.config.mjs` ignore에도 추가
+- [ ] `package.json` build 스크립트 → `prisma generate && next build`
+- [ ] `lib/prisma.ts` 싱글턴 (`PrismaPg` 어댑터 + `globalThis` 캐싱)
+- [ ] `Draw` / `NumberStat` 모델 + 첫 마이그레이션
+- [ ] `prisma/seed.ts`로 기존 JSON 1,236회 이관 (**재크롤링 금지** — 기획서 §4.1 백필 1회성 원칙)
+- [ ] `lib/repositories/draws.ts` — `data/draws.ts` 대체하되 **인터페이스 동일 유지**
+- [ ] `/results`, `/results/[round]`, `/stats` 전환
+- [ ] `data/lotto-draws.json`은 **삭제하지 말 것** — 되돌릴 수 있는 마지막 지점
+- [ ] `pnpm build` / `pnpm test` / `pnpm lint` 통과 확인
+
+> `lib/draw-engine.ts`, `lib/rank.ts`, `lib/stats.ts`는 **건드리지 않는다.** 순수 함수로 남아야 기존 테스트가 살고 `/draw`·`/check`의 DB 접근이 0으로 유지된다 (E-5).
+
+### E-2. 수집 자동화 (3~4일) — D의 "주간 자동 갱신"을 대체
+
+- [ ] 파싱·검증 로직을 `lib/collector/`로 추출 (`scripts/collect-lotto-draws.mjs`와 공유 — 두 벌로 갈라지면 규격 변경 시 한쪽만 고치는 사고가 난다)
+- [ ] `POST /api/internal/collect` + `CRON_SECRET`, 멱등 처리
+- [ ] `.github/workflows/collect.yml` — `*/10 12-14 * * 6` (KST 토 21:00~24:00). **Vercel Hobby 크론은 하루 1회 + ±1시간이라 SLA 미달**
+- [ ] `revalidateTag("draws")` / `revalidateTag("stats")` 무효화 연결
+- [ ] 4xx/429 시 자동 중단 + 알림 (**우회 금지** — 기획서 §7.1)
+- [ ] `CollectionLog` 모델
+- [ ] `/admin/draws` 수동 입력 폼 (수집 실패 백업책 — 기획서 §4.1)
+- [ ] 다음 토요일 실제 추첨으로 무인 검증
+- [ ] `scripts/collect-lotto-draws.mjs`는 백필 전용으로 존치
+
+### E-3. 인증·동기화 (약 1.5주)
+
+- [ ] B-2의 스키마 보강 선행 (`updatedAt`·`deletedAt`·툼스톤)
+- [ ] Better Auth 설치 (**Auth.js 아님** — 2025년 9월 팀 합류 후 신규 프로젝트는 Better Auth 권장, 두 스키마는 호환 안 됨)
+- [ ] 로그인 1종 (이메일 매직링크 또는 카카오)
+- [ ] `SavedTicket` 모델 — `lib/storage.ts`의 `SavedSet`과 1:1
+- [ ] 동기화 엔드포인트 3종 (`GET /api/tickets`, `POST /api/tickets/sync`, `DELETE /api/tickets/:id`)
+- [ ] 병합 규칙 구현 + 테스트: 오프라인 생성 → 로그인 → 병합 / 양쪽 수정 충돌 / 삭제 후 재동기화
+- [ ] **최초 로그인 시 익명 티켓 귀속** — 빠뜨리면 "로그인했더니 번호가 사라졌다"
+- [ ] IndexedDB를 1차 저장소로 유지 (서버는 백업·동기화)
+
+### E-4. v1.1 데이터
+
+- [ ] `DrawPrize` 등위별 당첨금 — 별도 페이지 파싱 (B-5 잔여와 연계)
+- [ ] `WinningStore` — 공공데이터포털 개방 데이터 (B-5 잔여와 연계)
+- [ ] `PairStat` 테이블은 **만들지 않는다** — `lib/stats.ts`의 런타임 계산(990쌍)으로 충분. 빌드 시간 실측에서 문제될 때만 재검토
+
+### E-5. 비용 방어
+
+- [ ] 무료 티어는 월 100k 오퍼레이션 / 500MB. **TCP 직결은 요청당 1건 과금**
+- [ ] `/draw`·`/check`·`/archive`는 DB 접근 0건 유지
+- [ ] 첫 달 실사용량 측정 후 플랜 판단
 
 ---
 
 ## 권장 순서
 
-1. **A-1** 라인엔딩 — 지금 안 하면 이후 모든 PR diff가 오염된다
-2. **A-2 ~ A-4** 잔재 삭제 — 한 커밋으로 묶어서
-3. **C-1** 정적 생성 범위 결정 — 기능 작업 전에 정해야 라우트 설계가 흔들리지 않는다
-4. **B-1** 고급 조건 — 엔진이 이미 있어서 투입 대비 산출이 가장 좋다
-5. **B-2** 보관함 — 버튼이 이미 노출되어 있어 동작하지 않는 상태가 가장 눈에 띈다
-6. **B-3 ~ B-6** 나머지
+A 전체와 B-1~B-4 완료. 남은 것의 순서:
+
+1. **B-2 잔여** IndexedDB 스키마 보강 — 사용자가 늘기 전에 할수록 싸다. 30분이면 끝나고 E-3의 선행 조건이다
+2. **E-1** 읽기 경로 이관 — 되돌릴 수 있는 마지막 지점
+3. **E-2** 수집 자동화 — 여기까지 오면 데이터가 손 안 대고 갱신된다
+4. **E-4 + B-5 잔여** 등위별 당첨금·판매점 — 테이블과 화면을 같이
+5. **E-3** 인증·동기화 — 작업량이 가장 크고 없어도 서비스가 돈다. 마지막
+6. **B-6** QR — 실물 용지 파싱 검증 결과에 따라 통째로 드롭될 수 있음
+
+**C-2(sitemap·robots)는 배포 전 아무 때나.** 다른 작업과 의존이 없다.

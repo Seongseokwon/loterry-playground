@@ -3,7 +3,7 @@ import type { Draw, NumberStat } from "@/lib/types";
 
 type StoredDraw = NonNullable<Awaited<ReturnType<typeof prisma.draw.findFirst>>>;
 
-function toDraw(row: StoredDraw): Draw {
+export function toDraw(row: StoredDraw): Draw {
   return {
     round: row.round,
     date: row.drawDate.toISOString().slice(0, 10),

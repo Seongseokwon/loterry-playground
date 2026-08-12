@@ -36,3 +36,14 @@ model NumberStat {
 
   @@map("number_stats")
 }
+
+model CollectionLog {
+  id        BigInt   @id @default(autoincrement())
+  round     Int?
+  status    String
+  message   String?
+  createdAt DateTime @default(now())
+
+  @@index([createdAt])
+  @@map("collection_logs")
+}

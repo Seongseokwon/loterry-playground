@@ -43,9 +43,17 @@
 .next-pattern-preview-icon { width: 128px; height: 128px; object-fit: contain; }
 .next-pattern-preview h2 { margin: 0; }
 .next-pattern-preview p { max-width: 480px; }
-.next-pattern-example { display: flex; align-items: center; gap: 12px; margin: 4px 0; color: var(--color-body); font-size: 15px; font-weight: 700; }
-.next-pattern-example strong { color: var(--color-primary); font-size: 22px; }
-.next-pattern-example-highlight { padding: 7px 10px; border-radius: var(--radius-btn-s); background: var(--color-weak-bg); color: var(--color-weak-fg); }
+.next-pattern-current { display: flex; align-items: center; gap: 10px; margin: 4px 0; padding: 10px 14px; border-radius: var(--radius-btn-s); background: var(--color-canvas); }
+.next-pattern-current strong { color: var(--color-weak-fg); font-size: 17px; letter-spacing: .04em; }
+.next-pattern-result-grid { width: 100%; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; text-align: left; }
+.next-pattern-locked, .next-pattern-second { min-height: 150px; display: flex; flex-direction: column; align-items: flex-start; gap: 8px; padding: 16px; border-radius: var(--radius-btn-m); background: var(--color-canvas); }
+.next-pattern-locked { border: 1px dashed var(--color-border); }
+.next-pattern-locked strong { color: var(--color-muted); font-size: 20px; letter-spacing: .12em; }
+.next-pattern-locked small, .next-pattern-second small { color: var(--color-muted); font-size: 12px; }
+.next-pattern-locked .product-button { margin-top: auto; }
+.next-pattern-second { border: 1px solid color-mix(in srgb, var(--color-primary) 30%, var(--color-border)); background: var(--color-weak-bg); }
+.next-pattern-second strong { color: var(--color-weak-fg); font-size: 20px; letter-spacing: .04em; }
+.next-pattern-empty { width: 100%; padding: 20px; border-radius: var(--radius-btn-m); background: var(--color-canvas); text-align: left; }
 .preset-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .preset-description { display: flex; align-items: flex-start; gap: 14px; }
 .preset-description .badge { flex: 0 0 auto; white-space: nowrap; }
@@ -230,6 +238,7 @@
   .preset-grid .preset-card:nth-child(n+4) { min-height: 112px; }
   .preset-description { flex-direction: column; }
   .next-pattern-preview { padding: 32px 20px; }
+  .next-pattern-result-grid { grid-template-columns: 1fr; }
   .result-game { align-items: flex-start; flex-direction: column; }
   .check-layout { grid-template-columns: 1fr; }
   .check-result { position: static; }
