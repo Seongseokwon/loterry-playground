@@ -6,11 +6,23 @@ import { Badge } from "@/components/ui/Badge";
 import { lottoDraws } from "@/data/draws";
 import { formatKoreanDate, formatWon } from "@/lib/format";
 
-export function generateStaticParams() { return lottoDraws.map((draw) => ({ round: String(draw.round) })); }
+const INDEXABLE_ROUNDS = 30;
+
+export const dynamicParams = true;
+
+export function generateStaticParams() {
+  return lottoDraws.slice(0, INDEXABLE_ROUNDS).map((draw) => ({ round: String(draw.round) }));
+}
 
 export async function generateMetadata({ params }: { params: Promise<{ round: string }> }): Promise<Metadata> {
   const { round } = await params;
-  return { title: `제${round}회 당첨번호`, description: `제${round}회 로또 당첨번호와 1등 정보를 확인하세요.` };
+  const draw = lottoDraws.find((item) => item.round === Number(round));
+  const isIndexable = draw ? lottoDraws.indexOf(draw) < INDEXABLE_ROUNDS : false;
+  return {
+    title: `제${round}회 당첨번호`,
+    description: `제${round}회 로또 당첨번호와 1등 정보를 확인하세요.`,
+    robots: { index: isIndexable, follow: isIndexable },
+  };
 }
 
 export default async function ResultDetailPage({ params }: { params: Promise<{ round: string }> }) {
