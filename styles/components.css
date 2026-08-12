@@ -7,6 +7,8 @@
 .mobile-nav { display: none; }
 .site-footer { background: var(--color-surface); border-top: 1px solid var(--color-border); color: var(--color-muted); font-size: 13px; line-height: 21px; }
 .site-footer > div { width: min(100%, 1080px); margin: 0 auto; padding: 32px 20px; }
+.footer-nav { display: flex; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; color: var(--color-body); font-weight: 600; }
+.footer-nav a:hover { color: var(--color-primary); }
 
 .product-button, .marketing-button { position: relative; border: 0; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; font-weight: 600; transition: background 150ms cubic-bezier(.4,0,.2,1), transform 150ms cubic-bezier(.4,0,.2,1); }
 .product-button:active, .marketing-button:active { transform: scale(.98); }
@@ -103,7 +105,7 @@ button.heat-cell { cursor: pointer; }
   .site-header-inner { height: 56px; }
   .brand { font-size: 15px; }
   .brand-mark { width: 32px; height: 32px; }
-  .mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(5, 1fr); padding: 8px 4px max(10px, env(safe-area-inset-bottom)); background: var(--color-canvas); border-top: 1px solid var(--color-border); }
+  .mobile-nav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 40; display: grid; grid-template-columns: repeat(6, 1fr); padding: 8px 4px max(10px, env(safe-area-inset-bottom)); background: var(--color-canvas); border-top: 1px solid var(--color-border); }
   .mobile-nav a { min-height: 48px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; color: var(--color-muted); font-size: 16px; }
   .mobile-nav-icon { width: 22px; height: 22px; flex: 0 0 auto; object-fit: contain; }
   .mobile-nav a:not(.nav-active) .mobile-nav-icon { filter: grayscale(1); opacity: .52; }

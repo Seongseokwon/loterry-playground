@@ -30,6 +30,7 @@ describe("navigation contract", () => {
     "app/draw/[preset]/page.tsx",
     "app/stats/page.tsx",
     "app/check/page.tsx",
+    "app/archive/page.tsx",
     "app/not-found.tsx",
     "app/error.tsx",
     "app/loading.tsx",
@@ -39,7 +40,7 @@ describe("navigation contract", () => {
 
   it("keeps every primary destination in the shared navigation", () => {
     const chrome = readFileSync(join(root, "components/SiteChrome.tsx"), "utf8");
-    for (const href of ["/", "/results", "/draw", "/stats", "/check"]) {
+    for (const href of ["/", "/results", "/draw", "/stats", "/check", "/archive"]) {
       expect(chrome).toContain(`href: "${href}"`);
     }
   });

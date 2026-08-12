@@ -9,6 +9,7 @@ const navItems = [
   { href: "/draw", icon: "dice", label: "추첨" },
   { href: "/stats", icon: "chart", label: "통계" },
   { href: "/check", icon: "ticket", label: "내 번호" },
+  { href: "/archive", icon: "ticket", label: "보관함" },
 ];
 
 export function AppHeader() {
@@ -58,6 +59,9 @@ export function AppFooter() {
   return (
     <footer className="site-footer">
       <div>
+        <nav className="footer-nav" aria-label="푸터 메뉴">
+          {navItems.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
+        </nav>
         <p>본 사이트는 동행복권 및 기획재정부와 무관한 비공식 정보 서비스입니다.</p>
         <p>제공되는 모든 번호 추첨과 통계는 재미를 위한 것이며, 당첨 확률에 영향을 주지 않습니다.</p>
         <p>만 19세 미만은 복권을 구매할 수 없습니다.</p>

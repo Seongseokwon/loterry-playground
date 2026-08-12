@@ -8,9 +8,11 @@ import { LottoBall } from "@/components/lotto/LottoBall";
 import { NumberGrid } from "@/components/lotto/NumberGrid";
 import { PresetCard } from "@/components/lotto/PresetCard";
 import { ResultSheet } from "@/components/lotto/ResultSheet";
+import { TextField } from "@/components/ui/TextField";
 import { lottoDraws } from "@/data/draws";
 import { drawNumbers } from "@/lib/draw-engine";
 import { aggregateNumberStats } from "@/lib/stats";
+import { saveSavedSet, type SavedSet, type SavedSetInput, type SavedSetNumbers } from "@/lib/storage";
 import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 
 type Preset = "random" | "hot" | "cold" | "fixed" | "carryover";
@@ -45,6 +47,14 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [games, setGames] = useState<1 | 5>(1);
   const [result, setResult] = useState<DrawResult | null>(null);
   const [saved, setSaved] = useState(false);
+  const [saveGameIndex, setSaveGameIndex] = useState(0);
+  const [saveLabel, setSaveLabel] = useState("");
+  const [saveMemo, setSaveMemo] = useState("");
+  const [targetRound, setTargetRound] = useState(lottoDraws[0].round + 1);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState("");
+  const [limitNotice, setLimitNotice] = useState<SavedSet | null>(null);
+  const [pendingSave, setPendingSave] = useState<SavedSetInput | null>(null);
   const stats = useMemo(() => aggregateNumberStats(lottoDraws), []);
   const sumRange: [number, number] | undefined = sumMode === "none" ? undefined : sumMode === "narrow" ? [120, 160] : sumMode === "wide" ? [100, 180] : [sumMin, sumMax];
 
@@ -67,6 +77,10 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
 
   const runDraw = () => {
     setSaved(false);
+    setSaveGameIndex(0);
+    setSaveError("");
+    setLimitNotice(null);
+    setPendingSave(null);
     setResult(drawNumbers(request(), { stats, latestDraw: lottoDraws[0], pastDraws: lottoDraws }));
   };
 
@@ -83,6 +97,40 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     const next = Math.min(255, Math.max(21, value));
     setSumMax(Math.max(next, sumMin));
     setSumMode("custom");
+  };
+  const buildSaveInput = (): SavedSetInput | null => {
+    const game = result?.games[saveGameIndex];
+    if (!game || game.length !== 6) return null;
+    return {
+      numbers: [...game].sort((a, b) => a - b) as SavedSetNumbers,
+      conditions: request().conditions,
+      conditionLabels: result.appliedChips,
+      label: saveLabel,
+      memo: saveMemo,
+      targetRound,
+      presetId: preset,
+    };
+  };
+  const handleSave = async (replaceOldest = false) => {
+    const input = replaceOldest && pendingSave ? pendingSave : buildSaveInput();
+    if (!input) return;
+    setSaving(true);
+    setSaveError("");
+    try {
+      const outcome = await saveSavedSet(input, { replaceOldest });
+      if (outcome.status === "limit") {
+        setPendingSave(input);
+        setLimitNotice(outcome.oldest);
+        return;
+      }
+      setSaved(true);
+      setPendingSave(null);
+      setLimitNotice(null);
+    } catch {
+      setSaveError("브라우저 보관함을 사용할 수 없어요. 저장 권한을 확인해 주세요.");
+    } finally {
+      setSaving(false);
+    }
   };
   const failed = result && result.games.length === 0;
 
@@ -240,10 +288,21 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
                 </div>
               ))}
             </div>
-            <div className="sheet-actions">
-              <ProductButton tone="weak" onClick={runDraw}>다시 뽑기</ProductButton>
-              <ProductButton onClick={() => setSaved(true)}>{saved ? "저장했어요" : "보관함에 저장"}</ProductButton>
-            </div>
+            <div className="sheet-actions"><ProductButton tone="weak" onClick={runDraw}>다시 뽑기</ProductButton></div>
+            <section className="archive-save card">
+              <div><h4>보관함에 저장</h4><p className="body-small">번호와 조건을 이 브라우저에만 저장해요.</p></div>
+              {result.games.length > 1 && <label className="archive-select">저장할 게임
+                <select value={saveGameIndex} onChange={(event) => setSaveGameIndex(Number(event.currentTarget.value))}>
+                  {result.games.map((_, index) => <option value={index} key={index}>{String.fromCharCode(65 + index)}게임</option>)}
+                </select>
+              </label>}
+              <TextField label="라벨" placeholder="예: 아빠 번호" value={saveLabel} onChange={(event) => setSaveLabel(event.currentTarget.value)} helpText="비워 두면 ‘저장한 번호’로 표시해요." />
+              <TextField label="메모" placeholder="예: 다음 주 가족용" value={saveMemo} onChange={(event) => setSaveMemo(event.currentTarget.value)} />
+              <TextField label="대상 회차" type="number" min="1" max={lottoDraws[0].round + 1} value={targetRound} onChange={(event) => { if (Number.isFinite(event.currentTarget.valueAsNumber)) setTargetRound(Math.max(1, Math.trunc(event.currentTarget.valueAsNumber))); }} helpText={`현재 데이터 기준 다음 회차는 제${lottoDraws[0].round + 1}회예요.`} />
+              {limitNotice && <div className="archive-limit-warning" role="alert"><p>보관함이 가득 찼어요. 가장 오래된 ‘{limitNotice.label}’을 삭제하면 저장할 수 있어요.</p><div className="row"><ProductButton size="small" tone="danger" onClick={() => void handleSave(true)}>오래된 세트 삭제 후 저장</ProductButton><ProductButton size="small" tone="weak" onClick={() => { setLimitNotice(null); setPendingSave(null); }}>취소</ProductButton></div></div>}
+              {saveError && <p className="archive-error" role="alert">{saveError}</p>}
+              <ProductButton loading={saving} disabled={saved} onClick={() => void handleSave()}>{saved ? "저장했어요" : "보관함에 저장"}</ProductButton>
+            </section>
             <p className="body-small center">모든 추첨 방식은 재미를 위한 것이며 당첨 확률에 영향을 주지 않습니다.</p>
           </div>
         )}
