@@ -38,6 +38,7 @@
 .draw-intro { display: flex; flex-direction: column; gap: 6px; }
 .preset-grid { display: grid; grid-template-columns: repeat(6, 1fr); gap: 8px; }
 .preset-description { display: flex; align-items: flex-start; gap: 14px; }
+.preset-description .badge { flex: 0 0 auto; white-space: nowrap; }
 .preset-description p { color: var(--color-body); }
 .draw-divider { margin-top: 40px; }
 .chip-wrap { display: flex; flex-wrap: wrap; gap: 8px; }
