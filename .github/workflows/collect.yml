@@ -1,24 +1,17 @@
 name: Collect lotto draws
 
+# DB 백엔드를 걷어내면서 /api/internal/collect 엔드포인트가 없어졌습니다.
+# 자동 스케줄은 잠시 꺼두고, 수집 결과를 data/lotto-draws.json에 커밋하는
+# 방식으로 다시 붙일 예정입니다. 그때까지는 로컬에서 아래 명령으로 갱신하세요.
+#
+#   pnpm collect:draws
+#
 on:
-  schedule:
-    # Saturday 21:00-23:59 KST (12:00-14:59 UTC), every 10 minutes.
-    - cron: "*/10 12-14 * * 6"
   workflow_dispatch:
 
 jobs:
-  collect:
+  noop:
     runs-on: ubuntu-latest
     steps:
-      - name: Collect latest draw
-        env:
-          COLLECT_URL: ${{ secrets.COLLECT_URL }}
-          CRON_SECRET: ${{ secrets.CRON_SECRET }}
-        run: |
-          test -n "$COLLECT_URL"
-          test -n "$CRON_SECRET"
-          curl --fail-with-body --silent --show-error \
-            --request POST \
-            --header "Authorization: Bearer ${CRON_SECRET}" \
-            --header "Content-Type: application/json" \
-            "${COLLECT_URL}/api/internal/collect"
+      - name: Collection is temporarily manual
+        run: echo "로컬에서 'pnpm collect:draws' 실행 후 data/lotto-draws.json 을 커밋하세요."
