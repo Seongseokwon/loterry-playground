@@ -14,7 +14,7 @@ echo Progress is saved after every successful response and can be resumed.
 echo Press Ctrl+C to stop safely.
 echo.
 
-node scripts\collect-lotto-draws.mjs --target=1236 --interval-ms=15000
+node scripts\collect-lotto-draws.mjs --target=1238 --interval-ms=15000
 echo.
 if errorlevel 1 (
   echo Collection stopped because an error was detected. Check data\collection-state.json.
