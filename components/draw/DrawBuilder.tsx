@@ -25,7 +25,7 @@ const presetCopy: Record<Preset, { title: string; copy: string }> = {
   random: { title: "완전 랜덤", copy: "아무 조건도 더하지 않고 1부터 45까지 같은 기회로 여섯 번호를 골라요. 기본 필터만 적용되며, 언제든 다른 조건을 함께 켤 수 있어요." },
   hot: { title: "최근 자주 나온 번호", copy: "최근 30회 출현 횟수가 높은 번호에 잠정 가중치를 더해 골라요. 과거 빈도는 다음 회차의 당첨 확률을 바꾸지 않으며, 조합을 고르는 재미를 위한 기준이에요." },
   cold: { title: "한동안 쉬고 있는 번호", copy: "마지막으로 나온 지 오래된 상위 20개 번호에 가중치를 더해 골라요. 오래 나오지 않았다는 사실이 다음 추첨에서 나올 가능성을 높이지는 않아요." },
-  fixed: { title: "내 번호 넣기", copy: "꼭 넣고 싶은 번호를 최대 5개까지 정하고, 남은 자리는 안전한 난수로 채워요. 넣을 번호와 뺄 번호가 겹치면 넣을 번호를 우선해요." },
+  fixed: { title: "내 번호 넣기", copy: "꼭 넣고 싶은 번호를 최대 6개까지 정하고, 부족한 자리는 안전한 난수로 채워요. 여섯 개를 모두 고르면 선택한 번호 그대로 저장할 수도 있어요." },
   carryover: { title: "지난 회차 번호 섞기", copy: "직전 회차 당첨번호 중 하나를 반드시 포함하고 나머지를 새로 골라요. 같은 숫자가 연속 회차에 나오는 현상을 재미있게 살펴보는 조건이에요." },
   pair: { title: "궁합수", copy: "과거 회차에서 함께 나온 횟수가 많은 번호를 참고해요. 기준 번호는 조합에 포함하고, 상위 K개 궁합수에 등장한 동반 번호에 가중치를 더해요." },
   birthday: { title: "기념일 번호", copy: "입력한 날짜의 일을 1~31 번호로 바꾸고, 부족한 자리는 1~31 안에서 랜덤으로 채워요. 날짜를 번호로 바꾸는 방식에는 분명한 편향이 있어요." },
@@ -61,6 +61,9 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [targetRound, setTargetRound] = useState(lottoDraws[0].round + 1);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState("");
+  const [manualSaved, setManualSaved] = useState(false);
+  const [manualSaving, setManualSaving] = useState(false);
+  const [manualSaveError, setManualSaveError] = useState("");
   const [limitNotice, setLimitNotice] = useState<SavedSet | null>(null);
   const [pendingSave, setPendingSave] = useState<SavedSetInput | null>(null);
   const stats = useMemo(() => aggregateNumberStats(lottoDraws), []);
@@ -98,7 +101,11 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     setResult(drawNumbers(request(), { stats, pairStats: pairs, latestDraw: lottoDraws[0], pastDraws: lottoDraws }));
   };
 
-  const toggleFixed = (number: number) => setFixed((current) => current.includes(number) ? current.filter((item) => item !== number) : current.length < 5 ? [...current, number].sort((a, b) => a - b) : current);
+  const toggleFixed = (number: number) => {
+    setManualSaved(false);
+    setManualSaveError("");
+    setFixed((current) => current.includes(number) ? current.filter((item) => item !== number) : current.length < 6 ? [...current, number].sort((a, b) => a - b) : current);
+  };
   const toggleExcluded = (number: number) => setExcluded((current) => current.includes(number) ? current.filter((item) => item !== number) : [...current, number].sort((a, b) => a - b));
   const updateSumMin = (value: number) => {
     if (!Number.isFinite(value)) return;
@@ -144,6 +151,34 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       setSaveError("브라우저 보관함을 사용할 수 없어요. 저장 권한을 확인해 주세요.");
     } finally {
       setSaving(false);
+    }
+  };
+  const saveSelectedNumbers = async () => {
+    if (fixed.length !== 6) return;
+    const input: SavedSetInput = {
+      numbers: [...fixed].sort((a, b) => a - b) as SavedSetNumbers,
+      conditions: { fixed: [...fixed] },
+      conditionLabels: ["직접 선택"],
+      label: "직접 선택한 번호",
+      memo: "",
+      targetRound,
+      presetId: "fixed",
+    };
+
+    setManualSaving(true);
+    setManualSaveError("");
+    try {
+      let outcome = await saveSavedSet(input);
+      if (outcome.status === "limit") {
+        const replace = window.confirm(`보관함이 가득 찼어요. 가장 오래된 ‘${outcome.oldest.label}’을 삭제하고 저장할까요?`);
+        if (!replace) return;
+        outcome = await saveSavedSet(input, { replaceOldest: true });
+      }
+      if (outcome.status === "saved") setManualSaved(true);
+    } catch {
+      setManualSaveError("선택한 번호를 저장하지 못했어요. 브라우저 저장 권한을 확인해 주세요.");
+    } finally {
+      setManualSaving(false);
     }
   };
   const failed = result && result.games.length === 0;
@@ -248,13 +283,20 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
         {editing && (
           <div className="number-picker card">
             <div className="section-head">
-              <div><h4>{editing === "fixed" ? "꼭 넣고 싶은 번호" : "이번에는 빼고 싶은 번호"}</h4><p className="body-small">{editing === "fixed" ? `${fixed.length}/5개` : `${excluded.length}/39개`}</p></div>
+              <div><h4>{editing === "fixed" ? "꼭 넣고 싶은 번호" : "이번에는 빼고 싶은 번호"}</h4><p className="body-small">{editing === "fixed" ? `${fixed.length}/6개` : `${excluded.length}/39개`}</p></div>
               <ProductButton size="small" tone="weak" onClick={() => setEditing(null)}>선택 닫기</ProductButton>
             </div>
             {editing === "fixed" ? (
-              <NumberGrid fixed={fixed} disabled={excluded} selected={fixed} maxSelected={5} onToggle={toggleFixed} />
+              <NumberGrid fixed={fixed} disabled={excluded} selected={fixed} maxSelected={6} onToggle={toggleFixed} />
             ) : (
               <NumberGrid excluded={excluded} disabled={fixed} selected={excluded} maxSelected={39} onToggle={toggleExcluded} />
+            )}
+            {editing === "fixed" && fixed.length === 6 && (
+              <div className="manual-save-box">
+                <div><strong>6개를 모두 골랐어요</strong><p className="body-small">선택한 번호를 보관함에 바로 저장할 수 있어요.</p></div>
+                <ProductButton size="small" tone="weak" loading={manualSaving} disabled={manualSaved} onClick={() => void saveSelectedNumbers()}>{manualSaved ? "저장했어요" : "선택한 번호 저장"}</ProductButton>
+                {manualSaveError && <p className="archive-error" role="alert">{manualSaveError}</p>}
+              </div>
             )}
           </div>
         )}

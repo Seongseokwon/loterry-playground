@@ -228,6 +228,36 @@
 .detail-pair-row { min-height: 48px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--color-border); color: var(--color-body); font-size: 14px; }
 .detail-pair-row:last-child { border-bottom: 0; }
 
+.manual-save-box { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-top: 20px; padding: 14px; border-radius: var(--radius-btn-m); background: var(--color-weak-bg); }
+.manual-save-box p { margin-top: 3px; }
+.manual-save-box .archive-error { margin: 0; }
+.saved-stats-card { margin-top: 20px; }
+.saved-stats-head { align-items: flex-start; }
+.saved-stats-head h2 { margin-top: 4px; font-size: 21px; }
+.saved-stats-head .eyebrow { margin: 0; }
+.saved-generated-result { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 20px 0; padding: 16px; border-radius: var(--radius-btn-m); background: var(--color-weak-bg); }
+.saved-generated-result .numbers { flex-wrap: nowrap; }
+.saved-frequency-table-wrap { max-height: 520px; overflow: auto; border-top: 1px solid var(--color-border); }
+.saved-frequency-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+.saved-frequency-table caption { padding: 16px 0 10px; color: var(--color-body); font-size: 14px; font-weight: 700; text-align: left; }
+.saved-frequency-table th, .saved-frequency-table td { height: 48px; padding: 6px 8px; border-bottom: 1px solid var(--color-border); text-align: right; white-space: nowrap; }
+.saved-frequency-table th:first-child, .saved-frequency-table td:first-child { width: 42px; color: var(--color-muted); text-align: center; }
+.saved-frequency-table th:nth-child(2), .saved-frequency-table td:nth-child(2) { width: 58px; text-align: center; }
+.saved-frequency-table th:nth-child(5), .saved-frequency-table td:nth-child(5) { width: 32%; }
+.saved-frequency-table thead th { height: 36px; color: var(--color-muted); font-size: 12px; font-weight: 600; }
+.saved-frequency-table .lotto-ball { vertical-align: middle; }
+.saved-frequency-track { display: block; min-width: 90px; height: 8px; border-radius: 999px; background: var(--color-surface); overflow: hidden; }
+.saved-frequency-track span { display: block; height: 100%; border-radius: inherit; background: var(--color-primary); }
+
+@media (max-width: 767px) {
+  .manual-save-box, .saved-generated-result { align-items: flex-start; flex-direction: column; }
+  .saved-stats-head { gap: 14px; }
+  .saved-stats-head .product-button { width: 100%; }
+  .saved-frequency-table th, .saved-frequency-table td { padding-inline: 4px; }
+  .saved-frequency-table th:nth-child(4), .saved-frequency-table td:nth-child(4) { display: none; }
+  .saved-frequency-table th:nth-child(5), .saved-frequency-table td:nth-child(5) { width: 42%; }
+}
+
 @media (max-width: 767px) {
   .home-hero { min-height: auto; grid-template-columns: 1fr; gap: 28px; padding-top: 8px; }
   .hero-copy h1 { font-size: 36px; }

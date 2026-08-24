@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { LottoBall } from "@/components/lotto/LottoBall";
+import { SavedStatsPanel } from "@/components/archive/SavedStatsPanel";
 import { Badge } from "@/components/ui/Badge";
 import { ProductButton } from "@/components/ui/Button";
 import { lottoDraws } from "@/data/draws";
@@ -53,6 +54,7 @@ export function ArchivePanel() {
         <Badge tone={sets.length >= ARCHIVE_LIMIT ? "danger" : "weak"}>{sets.length}/{ARCHIVE_LIMIT}</Badge>
       </div>
       {error && <p className="archive-error" role="alert">{error}</p>}
+      {!loading && sets.length > 0 && <SavedStatsPanel sets={sets} />}
       {loading ? (
         <section className="card archive-empty"><p className="body-color">보관함을 불러오는 중이에요.</p></section>
       ) : sets.length === 0 ? (

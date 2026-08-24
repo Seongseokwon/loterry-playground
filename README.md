@@ -1,6 +1,6 @@
 # 로또 플레이그라운드
 
-동행복권 공개 회차 데이터 1~1236회, 번호 통계, 조건 조립형 추첨 엔진, 등수 판정을 제공하는 Next.js App Router 프론트엔드입니다.
+동행복권 공개 회차 데이터 1~1238회, 번호 통계, 조건 조립형 추첨 엔진, 등수 판정과 저장 번호 분석을 제공하는 Next.js App Router 프론트엔드입니다.
 
 ## 실행
 
@@ -18,11 +18,11 @@ pnpm build
 
 ## 구조
 
-- `app/`: 홈, 당첨번호 목록·상세, 추첨, 통계, 내 번호 조회
+- `app/`: 홈, 당첨번호 목록·상세, 추첨, 통계, 내 번호 조회, 번호 보관함·분석
 - `components/ui/`: Button, Badge, TextField, Agreement
 - `components/lotto/`: LottoBall, NumberGrid, ConditionChip, PresetCard, StatHeatmap, ResultSheet
 - `data/`: 실제 당첨 데이터와 애플리케이션 데이터 진입점
-- `lib/`: 도메인 타입, 어댑터, CSPRNG, 추첨 엔진, 등수 판정, 통계 집계
+- `lib/`: 도메인 타입, 어댑터, CSPRNG, 추첨 엔진, 등수 판정, 통계 집계, 저장 번호 분석
 - `scripts/`: 동행복권 데이터 수집기
 - `styles/`: 디자인 토큰과 화면 스타일
 - `tests/`: Vitest 단위 테스트
