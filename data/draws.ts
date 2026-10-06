@@ -10,5 +10,5 @@ export const lottoDraws: Draw[] = collectedDraws.map((draw) => ({
 export const latestDraw = lottoDraws[0];
 export const oldestDraw = lottoDraws[lottoDraws.length - 1];
 
-// 1,236 draws × 15 pairs is small enough to calculate once at module load.
+// 1,244 draws × 15 pairs is small enough to calculate once at module load.
 export const lottoPairStats = pairStats(lottoDraws);

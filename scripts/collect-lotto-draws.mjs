@@ -4,7 +4,7 @@ import { fileURLToPath } from "node:url";
 import { API_URL, normalizeApiRow, requestBatch } from "../lib/collector/source.mjs";
 
 const DEFAULT_INTERVAL_MS = 15_000;
-const DEFAULT_TARGET_ROUND = 1236;
+const DEFAULT_TARGET_ROUND = 1244;
 const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 function parsePositiveInteger(value, name) {
@@ -62,11 +62,11 @@ function delay(ms) {
 
 function runSelfTest() {
   const draw = normalizeApiRow({
-    ltEpsd: 1236, ltRflYmd: "20260808", tm1WnNo: 12, tm2WnNo: 18, tm3WnNo: 21,
-    tm4WnNo: 29, tm5WnNo: 34, tm6WnNo: 38, bnsWnNo: 10, wholEpsdSumNtslAmt: 114070835000,
-    rnk1WnAmt: 2441919375, rnk1WnNope: 11,
+    ltEpsd: 1244, ltRflYmd: "20261003", tm1WnNo: 1, tm2WnNo: 13, tm3WnNo: 18,
+    tm4WnNo: 26, tm5WnNo: 34, tm6WnNo: 38, bnsWnNo: 25, wholEpsdSumNtslAmt: 123436098000,
+    rnk1WnAmt: 1604686625, rnk1WnNope: 18,
   });
-  if (draw.round !== 1236 || draw.date !== "2026-08-08" || draw.numbers.join(",") !== "12,18,21,29,34,38") {
+  if (draw.round !== 1244 || draw.date !== "2026-10-03" || draw.numbers.join(",") !== "1,13,18,26,34,38") {
     throw new Error("Collector self-test failed.");
   }
   console.log("Collector self-test passed.");

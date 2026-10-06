@@ -11,8 +11,8 @@
 npm run collect:draws
 ```
 
-현재 회차가 바뀌면 `--target`으로 지정할 수 있습니다.
+현재 회차가 바뀌면 `--target`으로 지정할 수 있습니다. 현재 스냅샷은 2026-10-03 추첨분인 1244회까지 반영되어 있습니다.
 
 ```powershell
-npm run collect:draws -- --target=1237
+npm run collect:draws -- --target=1244
 ```
