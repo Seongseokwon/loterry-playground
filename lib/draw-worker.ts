@@ -29,13 +29,14 @@ const workerScope = self as unknown as DrawWorkerScope;
 workerScope.onmessage = ({ data }) => {
   const generated: DrawResult[] = [];
   let lastGenerated: DrawResult | null = null;
+  const progressStep = Math.max(10, Math.ceil(data.total / 100));
 
   for (let index = 0; index < data.total; index += 1) {
     const next = drawNumbers(data.request, data.context);
     lastGenerated = next;
     if (!data.keepLastOnly) generated.push(next);
 
-    if (index === data.total - 1 || index % 10 === 0) {
+    if (index === data.total - 1 || index % progressStep === 0) {
       workerScope.postMessage({ type: "progress", current: index + 1, total: data.total });
     }
   }

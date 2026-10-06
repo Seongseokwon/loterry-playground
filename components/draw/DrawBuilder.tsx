@@ -106,7 +106,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
 
   const runDraw = async () => {
     if (generating) return;
-    const total = Math.min(10000, Math.max(1, Math.trunc(generationCount) || 1));
+    const total = Math.min(1_000_000, Math.max(1, Math.trunc(generationCount) || 1));
     setSaved(false);
     setSaveGameIndex(0);
     setSaveError("");
@@ -416,9 +416,9 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           <legend>몇 번 반복해서 뽑을까요?</legend>
           <div className="generation-count-row">
             {[1, 5, 10].map((count) => <button type="button" key={count} className={generationMode === "preset" && generationCount === count ? "segment-on" : ""} aria-pressed={generationMode === "preset" && generationCount === count} onClick={() => { setGenerationMode("preset"); setGenerationCount(count); }}>{count}회</button>)}
-            <label>직접 입력 <input type="number" min="1" max="10000" value={generationMode === "custom" ? generationCount : ""} placeholder="횟수" onChange={(event) => { setGenerationMode("custom"); setGenerationCount(Math.min(10000, Math.max(1, Math.trunc(event.currentTarget.valueAsNumber) || 1))); }} /></label>
+            <label>직접 입력 <input type="number" min="1" max="1000000" value={generationMode === "custom" ? generationCount : ""} placeholder="횟수" onChange={(event) => { setGenerationMode("custom"); setGenerationCount(Math.min(1_000_000, Math.max(1, Math.trunc(event.currentTarget.valueAsNumber) || 1))); }} /></label>
           </div>
-          <p className="body-small">빠른 선택은 만든 조합을 모두 보여주고, 직접 입력은 마지막 조합 하나만 보여줘요. 최대 10,000회까지 가능해요.</p>
+          <p className="body-small">빠른 선택은 만든 조합을 모두 보여주고, 직접 입력은 마지막 조합 하나만 보여줘요. 최대 1,000,000회까지 가능해요.</p>
         </fieldset>
       </section>
 
