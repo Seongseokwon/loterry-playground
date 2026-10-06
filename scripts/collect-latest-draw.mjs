@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { requestBatch } from "../lib/collector/source.mjs";
+import { requestBatch, validateDrawCollection } from "../lib/collector/source.mjs";
 
 const PROJECT_ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const OUTPUT_PATH = resolve(PROJECT_ROOT, "data/lotto-draws.json");
@@ -19,11 +19,12 @@ async function writeJsonAtomic(path, value) {
 
 async function main() {
   const existing = await readJson(OUTPUT_PATH);
-  if (!Array.isArray(existing) || existing.length === 0) throw new TypeError("Existing lotto data must be a non-empty array.");
+  validateDrawCollection(existing);
 
   const existingByRound = new Map(existing.map((draw) => [draw.round, draw]));
   const latestStoredRound = Math.max(...existingByRound.keys());
   const received = await requestBatch(latestStoredRound + 1);
+  validateDrawCollection(received, { requireContiguous: false, allowEmpty: true });
   const latestAvailableRound = Math.max(latestStoredRound, ...received.map((draw) => draw.round));
 
   if (latestAvailableRound === latestStoredRound) {
@@ -38,6 +39,7 @@ async function main() {
   }
 
   const normalized = Array.from(existingByRound.values()).sort((a, b) => b.round - a.round);
+  validateDrawCollection(normalized);
   await writeJsonAtomic(OUTPUT_PATH, normalized);
   console.log(`Updated lotto data: ${latestStoredRound} -> ${latestAvailableRound} (${normalized.length} rounds).`);
 }

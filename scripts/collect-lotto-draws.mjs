@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { API_URL, normalizeApiRow, requestBatch } from "../lib/collector/source.mjs";
+import { API_URL, normalizeApiRow, requestBatch, validateDrawCollection } from "../lib/collector/source.mjs";
 
 const DEFAULT_INTERVAL_MS = 15_000;
 const DEFAULT_TARGET_ROUND = 1244;
@@ -79,6 +79,7 @@ async function main() {
 
   const existingDraws = await readJson(options.outputPath, []);
   if (!Array.isArray(existingDraws)) throw new TypeError("Existing output is not an array.");
+  if (existingDraws.length > 0) validateDrawCollection(existingDraws);
   const drawsByRound = new Map(existingDraws.map((draw) => [draw.round, draw]));
   let lastRequestStartedAt = 0;
   let stopping = false;
@@ -128,6 +129,7 @@ async function main() {
       const normalized = Array.from(drawsByRound.values())
         .filter((draw) => draw.round >= 1 && draw.round <= options.targetRound)
         .sort((a, b) => b.round - a.round);
+      validateDrawCollection(normalized);
       await writeJsonAtomic(options.outputPath, normalized);
       console.log(`[${new Date().toISOString()}] ${normalized.length}/${options.targetRound} rounds saved (request ${queryRound}).`);
       queryRound = nextQueryRound(drawsByRound, options.targetRound);

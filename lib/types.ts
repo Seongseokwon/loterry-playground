@@ -55,6 +55,8 @@ export interface DrawResult {
   appliedChips: string[];
   attempts: number;
   relaxed?: string[];
+  successfulIterations?: number;
+  failedIterations?: number;
 }
 
 export interface DrawContext {

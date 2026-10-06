@@ -30,12 +30,16 @@ const workerScope = self as unknown as DrawWorkerScope;
 workerScope.onmessage = ({ data }) => {
   const generated: DrawResult[] = [];
   let lastGenerated: DrawResult | null = null;
+  let successfulIterations = 0;
+  let failedIterations = 0;
   const startedAt = performance.now();
   let lastProgressAt = startedAt;
 
   for (let index = 0; index < data.total; index += 1) {
     const next = drawNumbers(data.request, data.context);
     lastGenerated = next;
+    if (next.games.length === data.request.games) successfulIterations += 1;
+    else failedIterations += 1;
     if (!data.keepLastOnly) generated.push(next);
 
     const now = performance.now();
@@ -53,6 +57,8 @@ workerScope.onmessage = ({ data }) => {
       games: results.flatMap((item) => item.games),
       appliedChips: first.appliedChips,
       attempts: results.reduce((totalAttempts, item) => totalAttempts + item.attempts, 0),
+      successfulIterations,
+      failedIterations,
       relaxed: [...new Set(results.flatMap((item) => item.relaxed ?? []))],
     } : null,
   });

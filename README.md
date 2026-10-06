@@ -18,6 +18,8 @@ pnpm build
 
 ## 구조
 
+수익화 우선순위와 단계별 작업·완료 기준은 [수익화 로드맵 및 작업 인수인계](./MONETIZATION-ROADMAP.md)를 참고하세요. 다른 모델이나 개발자가 작업을 이어갈 때 이 문서에서 현재 구현과 계획을 먼저 구분해 확인합니다.
+
 - `app/`: 홈, 당첨번호 목록·상세, 추첨, 통계, 내 번호 조회, 번호 보관함·분석
 - `components/ui/`: Button, Badge, TextField, Agreement
 - `components/lotto/`: LottoBall, NumberGrid, ConditionChip, PresetCard, StatHeatmap, ResultSheet

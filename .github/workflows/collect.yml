@@ -37,6 +37,9 @@ jobs:
       - name: Collect the latest draw
         run: pnpm collect:latest
 
+      - name: Validate collected lotto data
+        run: node --input-type=module -e "import { readFile } from 'node:fs/promises'; import { validateDrawCollection } from './lib/collector/source.mjs'; const draws = JSON.parse(await readFile('data/lotto-draws.json', 'utf8')); const summary = validateDrawCollection(draws); console.log('Validated ' + summary.count + ' rounds (' + summary.firstRound + '-' + summary.latestRound + ').');"
+
       - name: Commit updated draw data
         run: |
           if git diff --quiet -- data/lotto-draws.json; then

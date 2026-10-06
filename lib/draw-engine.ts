@@ -150,17 +150,17 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
   const pairBase = [...new Set(request.conditions.pair?.base ?? [])].filter((number) => Number.isInteger(number) && number >= 1 && number <= 45);
   const birthdayNumbers = request.conditions.birthday ? mapBirthdayDates(request.conditions.birthday.dates) : [];
   // Six or fewer numbers remain mandatory. When more than six are selected,
-  // they become the candidate pool and one six-number combination is sampled
-  // from that pool for each game.
+  // they become the exclusive candidate pool and every generated game is
+  // sampled from that pool. Other strategy inputs must not escape this pool.
   const fixedAnchors = fixed.length <= 6 ? fixed : [];
   const fixedPool = fixed.length > 6 ? new Set(fixed) : null;
-  const anchors = [...new Set([...fixedAnchors, ...pairBase, ...birthdayNumbers])];
+  const anchors = fixedPool ? [] : [...new Set([...fixedAnchors, ...pairBase, ...birthdayNumbers])];
   const excluded = new Set((request.conditions.excluded ?? []).filter((number) => Number.isInteger(number) && number >= 1 && number <= 45));
   const relaxed: string[] = [];
   for (const number of anchors) {
     if (excluded.delete(number)) relaxed.push(`넣을 번호 ${number}을(를) 뺄 번호보다 우선했어요`);
   }
-  const available = ALL_NUMBERS.filter((number) => !excluded.has(number));
+  const available = ALL_NUMBERS.filter((number) => !excluded.has(number) && (!fixedPool || fixedPool.has(number)));
   if (anchors.length > 6 || available.length < 6 || anchors.some((number) => !available.includes(number))) {
     return { games: [], appliedChips: chipLabels(request), attempts: 0, relaxed: [...relaxed, ...relaxationSuggestions(request)] };
   }

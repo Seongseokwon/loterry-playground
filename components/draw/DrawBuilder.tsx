@@ -73,6 +73,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [generationError, setGenerationError] = useState("");
   const workerRef = useRef<Worker | null>(null);
   const resolveWorkerRef = useRef<(() => void) | null>(null);
+  const lastRequestRef = useRef<DrawRequest | null>(null);
   const [result, setResult] = useState<DrawResult | null>(null);
   const [saved, setSaved] = useState(false);
   const [saveGameIndex, setSaveGameIndex] = useState(0);
@@ -133,6 +134,8 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     setResult(null);
     setGenerating(true);
     setGenerationProgress({ current: 0, total, rate: 0, elapsedSeconds: 0, remainingSeconds: null });
+    const requestSnapshot = request();
+    lastRequestRef.current = requestSnapshot;
     try {
       const worker = new Worker(new URL("../../lib/draw-worker.ts", import.meta.url));
       workerRef.current = worker;
@@ -150,7 +153,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
         };
         worker.onerror = () => reject(new Error("번호 생성 작업을 실행하지 못했어요."));
         worker.postMessage({
-          request: request(),
+          request: requestSnapshot,
           context: { stats, pairStats: pairs, latestDraw: lottoDraws[0], pastDraws: lottoDraws },
           total,
           keepLastOnly: generationMode === "custom",
@@ -199,7 +202,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     if (!game || game.length !== 6) return null;
     return {
       numbers: [...game].sort((a, b) => a - b) as SavedSetNumbers,
-      conditions: request().conditions,
+      conditions: lastRequestRef.current?.conditions ?? request().conditions,
       conditionLabels: result.appliedChips,
       label: saveLabel,
       memo: saveMemo,
