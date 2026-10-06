@@ -10,7 +10,6 @@ import { PresetCard } from "@/components/lotto/PresetCard";
 import { ResultSheet } from "@/components/lotto/ResultSheet";
 import { TextField } from "@/components/ui/TextField";
 import { lottoDraws, lottoPairStats } from "@/data/draws";
-import { drawNumbers } from "@/lib/draw-engine";
 import { aggregateNumberStats } from "@/lib/stats";
 import { analyzeNextPatterns, formatPattern, MIN_NEXT_PATTERN_MATCHES, recommendedNextPattern } from "@/lib/next-pattern";
 import { saveSavedSet, type SavedSet, type SavedSetInput, type SavedSetNumbers } from "@/lib/storage";
@@ -116,24 +115,25 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     setResult(null);
     setGenerating(true);
     setGenerationProgress({ current: 0, total });
-    const generated: DrawResult[] = [];
-    let lastGenerated: DrawResult | null = null;
     try {
-      for (let index = 0; index < total; index += 1) {
-        const next = drawNumbers(request(), { stats, pairStats: pairs, latestDraw: lottoDraws[0], pastDraws: lottoDraws });
-        lastGenerated = next;
-        if (generationMode === "preset") generated.push(next);
-        if (index === total - 1 || index % 10 === 0) setGenerationProgress({ current: index + 1, total });
-        await new Promise<void>((resolve) => setTimeout(resolve, 0));
-      }
-      const results = generationMode === "custom" && lastGenerated ? [lastGenerated] : generated;
-      const first = results[0];
-      setResult(first ? {
-        games: results.flatMap((item) => item.games),
-        appliedChips: first.appliedChips,
-        attempts: results.reduce((totalAttempts, item) => totalAttempts + item.attempts, 0),
-        relaxed: [...new Set(results.flatMap((item) => item.relaxed ?? []))],
-      } : null);
+      const worker = new Worker(new URL("../../lib/draw-worker.ts", import.meta.url));
+      await new Promise<void>((resolve, reject) => {
+        worker.onmessage = (event: MessageEvent<{ type: "progress"; current: number; total: number } | { type: "complete"; result: DrawResult | null }>) => {
+          if (event.data.type === "progress") {
+            setGenerationProgress({ current: event.data.current, total: event.data.total });
+            return;
+          }
+          setResult(event.data.result);
+          resolve();
+        };
+        worker.onerror = () => reject(new Error("번호 생성 작업을 실행하지 못했어요."));
+        worker.postMessage({
+          request: request(),
+          context: { stats, pairStats: pairs, latestDraw: lottoDraws[0], pastDraws: lottoDraws },
+          total,
+          keepLastOnly: generationMode === "custom",
+        });
+      }).finally(() => worker.terminate());
     } finally {
       setGenerating(false);
       setGenerationProgress(null);
