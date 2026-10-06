@@ -27,6 +27,14 @@ describe("drawNumbers", () => {
     expect(new Set(result.games.map((game) => game.join(","))).size).toBe(5);
   });
 
+  it("6개를 넘는 고정 번호는 선택한 후보 안에서 여섯 개를 뽑는다", () => {
+    const fixed = [1, 2, 3, 4, 5, 6, 7, 8];
+    const result = drawNumbers({ ...base, conditions: { fixed } }, context);
+    expect(result.games).toHaveLength(1);
+    expect(result.games[0]).toHaveLength(6);
+    expect(result.games[0].every((number) => fixed.includes(number))).toBe(true);
+  });
+
   it("3연속 번호 필터를 지킨다", () => {
     const result = drawNumbers(base, context);
     const game = result.games[0];

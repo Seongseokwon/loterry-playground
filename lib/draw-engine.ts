@@ -4,7 +4,7 @@ import { DEFAULT_NUMBER_RANGES } from "./next-pattern";
 import type { DrawContext, DrawRequest, DrawResult, LottoNumber, NumberStat, PairStat } from "./types";
 
 // TODO: W2에 실데이터로 튜닝
-export const HOT_WEIGHT = { low: 1.3, mid: 2, high: 3 } as const;
+export const HOT_WEIGHT = { low: 1.15, mid: 1.35, high: 1.6 } as const;
 const MAX_ATTEMPTS = 5000;
 const ALL_NUMBERS = Array.from({ length: 45 }, (_, index) => index + 1);
 
@@ -15,8 +15,8 @@ export function mapBirthdayDates(dates: string[]): LottoNumber[] {
 
 function statValue(stat: NumberStat, window: 10 | 30 | 50 | 0) {
   if (window === 10) return stat.countRecent10;
+  if (window === 30) return stat.countRecent30;
   if (window === 50) return stat.countRecent50;
-  if (window === 30) return stat.countRecent10 * 0.35 + stat.countRecent50 * 0.65;
   return stat.totalCount;
 }
 
@@ -113,14 +113,19 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
   const fixed = [...new Set(request.conditions.fixed ?? [])].filter((number) => Number.isInteger(number) && number >= 1 && number <= 45);
   const pairBase = [...new Set(request.conditions.pair?.base ?? [])].filter((number) => Number.isInteger(number) && number >= 1 && number <= 45);
   const birthdayNumbers = request.conditions.birthday ? mapBirthdayDates(request.conditions.birthday.dates) : [];
-  const anchors = [...new Set([...fixed, ...pairBase, ...birthdayNumbers])];
+  // Six or fewer numbers remain mandatory. When more than six are selected,
+  // they become the candidate pool and one six-number combination is sampled
+  // from that pool for each game.
+  const fixedAnchors = fixed.length <= 6 ? fixed : [];
+  const fixedPool = fixed.length > 6 ? new Set(fixed) : null;
+  const anchors = [...new Set([...fixedAnchors, ...pairBase, ...birthdayNumbers])];
   const excluded = new Set((request.conditions.excluded ?? []).filter((number) => Number.isInteger(number) && number >= 1 && number <= 45));
   const relaxed: string[] = [];
   for (const number of anchors) {
     if (excluded.delete(number)) relaxed.push(`넣을 번호 ${number}을(를) 뺄 번호보다 우선했어요`);
   }
   const available = ALL_NUMBERS.filter((number) => !excluded.has(number));
-  if (fixed.length > 5 || anchors.length > 6 || available.length < 6 || anchors.some((number) => !available.includes(number))) {
+  if (anchors.length > 6 || available.length < 6 || anchors.some((number) => !available.includes(number))) {
     return { games: [], appliedChips: chipLabels(request), attempts: 0, relaxed: [...relaxed, ...relaxationSuggestions(request)] };
   }
 
@@ -129,13 +134,13 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
     [...context.stats].sort((a, b) => statValue(b, request.conditions.hot!.window) - statValue(a, request.conditions.hot!.window)).slice(0, 15).forEach((stat) => hotTop.add(stat.number));
   }
   const coldTop = new Set([...context.stats].sort((a, b) => b.gap - a.gap).slice(0, request.conditions.cold?.poolSize ?? 0).map((stat) => stat.number));
-  const pairs = context.pairStats?.length ? context.pairStats : request.conditions.pair ? aggregatePairStats(context.pastDraws) : [];
+  const pairs = request.conditions.pair ? aggregatePairStats(context.pastDraws.slice(0, 100)) : context.pairStats ?? [];
   const pairWeights = request.conditions.pair ? pairWeightMap(pairs, pairBase, request.conditions.pair.topK) : new Map<number, number>();
   const maxPairWeight = Math.max(...pairWeights.values(), 0);
   const weightFor = (number: number) => {
     let weight = 1;
     if (request.conditions.hot && hotTop.has(number)) weight *= HOT_WEIGHT[request.conditions.hot.weight];
-    if (request.conditions.cold && coldTop.has(number)) weight *= 2;
+    if (request.conditions.cold && coldTop.has(number)) weight *= 1.35;
     if (request.conditions.pair && pairWeights.has(number)) weight *= 1 + ((pairWeights.get(number) ?? 0) / Math.max(maxPairWeight, 1)) * 2;
     return weight;
   };
@@ -158,7 +163,7 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
       selected.push(number);
     }
 
-    const pool = available.filter((number) => (!request.conditions.birthday || number <= 31) && !selected.includes(number));
+    const pool = available.filter((number) => (!request.conditions.birthday || number <= 31) && (!fixedPool || fixedPool.has(number)) && !selected.includes(number));
     if (request.conditions.rangePattern) {
       for (const [rangeIndex, [min, max]] of DEFAULT_NUMBER_RANGES.entries()) {
         const target = request.conditions.rangePattern[rangeIndex];

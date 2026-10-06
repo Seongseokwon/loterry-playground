@@ -12,12 +12,13 @@ import { TextField } from "@/components/ui/TextField";
 import { lottoDraws, lottoPairStats } from "@/data/draws";
 import { drawNumbers } from "@/lib/draw-engine";
 import { aggregateNumberStats } from "@/lib/stats";
-import { analyzeNextPatterns, formatPattern } from "@/lib/next-pattern";
+import { analyzeNextPatterns, formatPattern, MIN_NEXT_PATTERN_MATCHES, recommendedNextPattern } from "@/lib/next-pattern";
 import { saveSavedSet, type SavedSet, type SavedSetInput, type SavedSetNumbers } from "@/lib/storage";
 import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 
 type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair" | "birthday" | "next-pattern";
 type SumMode = "none" | "narrow" | "wide" | "custom";
+type GenerationMode = "preset" | "custom";
 
 const COUNT_OPTIONS = [0, 1, 2, 3, 4, 5, 6] as const;
 
@@ -25,11 +26,11 @@ const presetCopy: Record<Preset, { title: string; copy: string }> = {
   random: { title: "완전 랜덤", copy: "아무 조건도 더하지 않고 1부터 45까지 같은 기회로 여섯 번호를 골라요. 기본 필터만 적용되며, 언제든 다른 조건을 함께 켤 수 있어요." },
   hot: { title: "최근 자주 나온 번호", copy: "최근 30회 출현 횟수가 높은 번호에 잠정 가중치를 더해 골라요. 과거 빈도는 다음 회차의 당첨 확률을 바꾸지 않으며, 조합을 고르는 재미를 위한 기준이에요." },
   cold: { title: "한동안 쉬고 있는 번호", copy: "마지막으로 나온 지 오래된 상위 20개 번호에 가중치를 더해 골라요. 오래 나오지 않았다는 사실이 다음 추첨에서 나올 가능성을 높이지는 않아요." },
-  fixed: { title: "내 번호 넣기", copy: "꼭 넣고 싶은 번호를 최대 6개까지 정하고, 부족한 자리는 안전한 난수로 채워요. 여섯 개를 모두 고르면 선택한 번호 그대로 저장할 수도 있어요." },
+  fixed: { title: "내 번호 넣기", copy: "후보 번호를 여러 개 고르면 그 안에서 여섯 번호를 뽑아요. 6개 이하는 모두 포함하고, 7개 이상은 후보 중 여섯 개를 조합해요." },
   carryover: { title: "지난 회차 번호 섞기", copy: "직전 회차 당첨번호 중 하나를 반드시 포함하고 나머지를 새로 골라요. 같은 숫자가 연속 회차에 나오는 현상을 재미있게 살펴보는 조건이에요." },
   pair: { title: "궁합수", copy: "과거 회차에서 함께 나온 횟수가 많은 번호를 참고해요. 기준 번호는 조합에 포함하고, 상위 K개 궁합수에 등장한 동반 번호에 가중치를 더해요." },
   birthday: { title: "기념일 번호", copy: "입력한 날짜의 일을 1~31 번호로 바꾸고, 부족한 자리는 1~31 안에서 랜덤으로 채워요. 날짜를 번호로 바꾸는 방식에는 분명한 편향이 있어요." },
-  "next-pattern": { title: "다음 패턴 추천", copy: "최근 100회에서 현재 패턴 다음에 이어진 횟수가 많은 2위 패턴으로 번호를 구성해요. 1위 패턴은 광고 보상 기능 연결 후 공개할 예정이에요." },
+  "next-pattern": { title: "다음 패턴 추천", copy: "최근 100회에서 현재 패턴 다음에 가장 자주 이어진 1위 패턴으로 번호를 구성해요." },
 };
 
 export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
@@ -43,7 +44,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [pairTopK, setPairTopK] = useState(20);
   const [pairEditing, setPairEditing] = useState(false);
   const [birthdayDates, setBirthdayDates] = useState<string[]>([""]);
-  const [noConsecutive3, setNoConsecutive3] = useState(true);
+  const [noConsecutive3, setNoConsecutive3] = useState(false);
   const [noPastJackpot, setNoPastJackpot] = useState(true);
   const [noSameTail3, setNoSameTail3] = useState(false);
   const [oddCount, setOddCount] = useState<DrawConditions["oddCount"]>();
@@ -52,7 +53,10 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [sumMin, setSumMin] = useState(21);
   const [sumMax, setSumMax] = useState(255);
   const [maxSameTail, setMaxSameTail] = useState<DrawConditions["maxSameTail"]>();
-  const [games, setGames] = useState<1 | 5>(1);
+  const [generationCount, setGenerationCount] = useState(1);
+  const [generationMode, setGenerationMode] = useState<GenerationMode>("preset");
+  const [generationProgress, setGenerationProgress] = useState<{ current: number; total: number } | null>(null);
+  const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<DrawResult | null>(null);
   const [saved, setSaved] = useState(false);
   const [saveGameIndex, setSaveGameIndex] = useState(0);
@@ -69,7 +73,16 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const stats = useMemo(() => aggregateNumberStats(lottoDraws), []);
   const pairs = useMemo(() => preset === "pair" ? lottoPairStats : [], [preset]);
   const nextPatternAnalysis = useMemo(() => preset === "next-pattern" ? analyzeNextPatterns(lottoDraws) : null, [preset]);
-  const selectedNextPattern = nextPatternAnalysis?.candidates[1]?.pattern;
+  const selectedNextPattern = nextPatternAnalysis ? recommendedNextPattern(nextPatternAnalysis) : undefined;
+  const recentFilterImpact = useMemo(() => {
+    const recent = lottoDraws.slice(0, 100);
+    const hasThreeConsecutive = (numbers: number[]) => numbers.some((number, index) => index <= numbers.length - 3 && numbers[index + 1] === number + 1 && numbers[index + 2] === number + 2);
+    const maxTailCount = (numbers: number[]) => Math.max(...Object.values(numbers.reduce<Record<number, number>>((counts, number) => ({ ...counts, [number % 10]: (counts[number % 10] ?? 0) + 1 }), {})));
+    return {
+      consecutive: recent.filter((draw) => hasThreeConsecutive(draw.numbers)).length,
+      sameTail: recent.filter((draw) => maxTailCount(draw.numbers) >= 3).length,
+    };
+  }, []);
   const sumRange: [number, number] | undefined = sumMode === "none" ? undefined : sumMode === "narrow" ? [120, 160] : sumMode === "wide" ? [100, 180] : [sumMin, sumMax];
 
   const request = (): DrawRequest => ({
@@ -88,23 +101,49 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       maxSameTail,
     },
     filters: { noConsecutive3, noPastJackpot, noSameTail3 },
-    games,
+    games: 1,
     presetId: preset,
   });
 
-  const runDraw = () => {
+  const runDraw = async () => {
+    if (generating) return;
+    const total = Math.min(10000, Math.max(1, Math.trunc(generationCount) || 1));
     setSaved(false);
     setSaveGameIndex(0);
     setSaveError("");
     setLimitNotice(null);
     setPendingSave(null);
-    setResult(drawNumbers(request(), { stats, pairStats: pairs, latestDraw: lottoDraws[0], pastDraws: lottoDraws }));
+    setResult(null);
+    setGenerating(true);
+    setGenerationProgress({ current: 0, total });
+    const generated: DrawResult[] = [];
+    let lastGenerated: DrawResult | null = null;
+    try {
+      for (let index = 0; index < total; index += 1) {
+        const next = drawNumbers(request(), { stats, pairStats: pairs, latestDraw: lottoDraws[0], pastDraws: lottoDraws });
+        lastGenerated = next;
+        if (generationMode === "preset") generated.push(next);
+        if (index === total - 1 || index % 10 === 0) setGenerationProgress({ current: index + 1, total });
+        await new Promise<void>((resolve) => setTimeout(resolve, 0));
+      }
+      const results = generationMode === "custom" && lastGenerated ? [lastGenerated] : generated;
+      const first = results[0];
+      setResult(first ? {
+        games: results.flatMap((item) => item.games),
+        appliedChips: first.appliedChips,
+        attempts: results.reduce((totalAttempts, item) => totalAttempts + item.attempts, 0),
+        relaxed: [...new Set(results.flatMap((item) => item.relaxed ?? []))],
+      } : null);
+    } finally {
+      setGenerating(false);
+      setGenerationProgress(null);
+    }
   };
 
   const toggleFixed = (number: number) => {
     setManualSaved(false);
     setManualSaveError("");
-    setFixed((current) => current.includes(number) ? current.filter((item) => item !== number) : current.length < 6 ? [...current, number].sort((a, b) => a - b) : current);
+    setFixed((current) => current.includes(number) ? current.filter((item) => item !== number) : [...current, number].sort((a, b) => a - b));
   };
   const toggleExcluded = (number: number) => setExcluded((current) => current.includes(number) ? current.filter((item) => item !== number) : [...current, number].sort((a, b) => a - b));
   const updateSumMin = (value: number) => {
@@ -197,25 +236,25 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           <PresetCard href="/draw" icon="random" title="완전 랜덤" description="조건 없이 가볍게" active={preset === "random"} />
           <PresetCard href="/draw/hot" icon="hot" title="핫넘버" description="최근 30회 · 중" active={preset === "hot"} />
           <PresetCard href="/draw/cold" icon="cold" title="미출현" description="상위 20개" active={preset === "cold"} />
-          <PresetCard href="/draw/fixed" icon="fixed" title="내 번호" description="최대 5개 넣기" active={preset === "fixed"} />
+          <PresetCard href="/draw/fixed" icon="fixed" title="내 번호" description="후보 여러 개 넣기" active={preset === "fixed"} />
           <PresetCard href="/draw/carryover" icon="carryover" title="이월수" description="직전 회차 1개" active={preset === "carryover"} />
           <PresetCard href="/draw/pair" icon="hot" title="궁합수" description="동시출현 Top K" active={preset === "pair"} />
           <PresetCard href="/draw/birthday" icon="fixed" title="기념일" description="날짜를 번호로" active={preset === "birthday"} />
-          <PresetCard href="/draw/next-pattern" icon="next-pattern" title="다음 패턴" description="2위 패턴으로 뽑기" active={preset === "next-pattern"} />
+          <PresetCard href="/draw/next-pattern" icon="next-pattern" title="다음 패턴" description="1위 패턴으로 뽑기" active={preset === "next-pattern"} />
         </div>
       </section>
 
       {preset === "next-pattern" && nextPatternAnalysis && (
         <section className="section card next-pattern-builder">
           <div className="section-head">
-            <div><h3>2위 패턴으로 번호 뽑기</h3><p className="body-small">최근 100회 중 현재 패턴 다음에 이어진 패턴을 기준으로 구성해요.</p></div>
+            <div><h3>1위 패턴으로 번호 뽑기</h3><p className="body-small">최근 100회 중 현재 패턴 다음에 가장 자주 이어진 패턴을 기준으로 구성해요.</p></div>
             <Badge tone="weak">{nextPatternAnalysis.matchingRounds}회 관찰</Badge>
           </div>
           <div className="next-pattern-builder-grid">
             <div><span className="body-small">현재 패턴</span><strong>{formatPattern(nextPatternAnalysis.currentPattern)}</strong></div>
-            <div className="next-pattern-builder-selected"><span className="body-small">사용할 2위 패턴</span><strong>{selectedNextPattern ? formatPattern(selectedNextPattern) : "추천 데이터 부족"}</strong></div>
+            <div className="next-pattern-builder-selected"><span className="body-small">사용할 1위 패턴</span><strong>{selectedNextPattern ? formatPattern(selectedNextPattern) : "표본 부족 · 일반 추첨"}</strong></div>
           </div>
-          <p className="body-small">번호 뽑기 버튼을 누르면 위 구간 분포를 지키면서 번호를 만들어요. 과거 패턴은 당첨을 예측하지 않습니다.</p>
+          <p className="body-small">{selectedNextPattern ? "번호 뽑기 버튼을 누르면 위 구간 분포를 지키면서 번호를 만들어요." : `현재 일치 회차가 ${nextPatternAnalysis.matchingRounds}회라 ${MIN_NEXT_PATTERN_MATCHES}회 이상 쌓일 때까지 일반 추첨으로 전환해요.`} 과거 패턴은 당첨을 예측하지 않습니다.</p>
         </section>
       )}
 
@@ -283,11 +322,11 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
         {editing && (
           <div className="number-picker card">
             <div className="section-head">
-              <div><h4>{editing === "fixed" ? "꼭 넣고 싶은 번호" : "이번에는 빼고 싶은 번호"}</h4><p className="body-small">{editing === "fixed" ? `${fixed.length}/6개` : `${excluded.length}/39개`}</p></div>
+              <div><h4>{editing === "fixed" ? "후보로 넣을 번호" : "이번에는 빼고 싶은 번호"}</h4><p className="body-small">{editing === "fixed" ? `${fixed.length}/45개 · 6개 이하 필수 포함` : `${excluded.length}/39개`}</p></div>
               <ProductButton size="small" tone="weak" onClick={() => setEditing(null)}>선택 닫기</ProductButton>
             </div>
             {editing === "fixed" ? (
-              <NumberGrid fixed={fixed} disabled={excluded} selected={fixed} maxSelected={6} onToggle={toggleFixed} />
+              <NumberGrid fixed={fixed} disabled={excluded} selected={fixed} maxSelected={45} onToggle={toggleFixed} />
             ) : (
               <NumberGrid excluded={excluded} disabled={fixed} selected={excluded} maxSelected={39} onToggle={toggleExcluded} />
             )}
@@ -367,16 +406,19 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       </section>
 
       <section className="section filter-card card">
-        <div><h4>조합 다듬기</h4><p className="body-small">기본 필터는 언제든 끌 수 있어요.</p></div>
+        <div><h4>조합 다듬기</h4><p className="body-small">기본 필터는 언제든 켤 수 있어요. 최근 실제 회차를 과도하게 제외하지 않도록 3연속 제외는 기본 해제 상태예요.</p><p className="body-small">최근 100회 기준: 3연속 포함 {recentFilterImpact.consecutive}회 · 같은 끝수 3개 이상 {recentFilterImpact.sameTail}회</p></div>
         <div className="chip-wrap">
           <ConditionChip icon="gear" label="3연속 번호 제외" checked={noConsecutive3} onChange={setNoConsecutive3} />
           <ConditionChip icon="gear" label="과거 1등 조합 제외" checked={noPastJackpot} onChange={setNoPastJackpot} />
           <ConditionChip icon="gear" label="같은 끝수 3개 제외" checked={noSameTail3} onChange={setNoSameTail3} />
         </div>
         <fieldset className="game-count">
-          <legend>몇 게임을 뽑을까요?</legend>
-          <label><input type="radio" name="games" checked={games === 1} onChange={() => setGames(1)} /> 1게임</label>
-          <label><input type="radio" name="games" checked={games === 5} onChange={() => setGames(5)} /> 5게임</label>
+          <legend>몇 번 반복해서 뽑을까요?</legend>
+          <div className="generation-count-row">
+            {[1, 5, 10].map((count) => <button type="button" key={count} className={generationMode === "preset" && generationCount === count ? "segment-on" : ""} aria-pressed={generationMode === "preset" && generationCount === count} onClick={() => { setGenerationMode("preset"); setGenerationCount(count); }}>{count}회</button>)}
+            <label>직접 입력 <input type="number" min="1" max="10000" value={generationMode === "custom" ? generationCount : ""} placeholder="횟수" onChange={(event) => { setGenerationMode("custom"); setGenerationCount(Math.min(10000, Math.max(1, Math.trunc(event.currentTarget.valueAsNumber) || 1))); }} /></label>
+          </div>
+          <p className="body-small">빠른 선택은 만든 조합을 모두 보여주고, 직접 입력은 마지막 조합 하나만 보여줘요. 최대 10,000회까지 가능해요.</p>
         </fieldset>
       </section>
 
@@ -388,11 +430,12 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       )}
 
       <div className="draw-actions">
-        <ProductButton className="full" onClick={runDraw}>번호 뽑기</ProductButton>
+        <ProductButton className="full" loading={generating} onClick={() => void runDraw()}>번호 뽑기</ProductButton>
+        {generationProgress && generationProgress.total > 10 && <div className="generation-progress" role="status" aria-live="polite"><div className="generation-progress-track"><span style={{ width: `${(generationProgress.current / generationProgress.total) * 100}%` }} /></div><p className="body-small">{generationProgress.total}회 중 {generationProgress.current}회 조합을 만들고 있어요</p></div>}
         <p className="body-small center">조건을 고르지 않으면 완전 랜덤으로 뽑아요</p>
       </div>
 
-      <ResultSheet open={Boolean(result?.games.length)} title="이렇게 뽑았어요" onClose={() => setResult(null)}>
+      <ResultSheet open={Boolean(result?.games.length)} title={`${result?.games.length ?? 0}개 조합을 만들었어요`} onClose={() => setResult(null)}>
         {result && (
           <div className="stack" aria-live="polite">
             <div className="chip-wrap">{result.appliedChips.map((chip) => <Badge key={chip}>{chip}</Badge>)}</div>

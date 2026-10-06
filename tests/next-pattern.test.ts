@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { analyzeNextPatterns, drawPattern, formatPattern } from "@/lib/next-pattern";
+import { analyzeNextPatterns, drawPattern, formatPattern, MIN_NEXT_PATTERN_MATCHES, recommendedNextPattern } from "@/lib/next-pattern";
 import type { Draw } from "@/lib/types";
 
 const draw = (round: number, numbers: Draw["numbers"]): Draw => ({ round, date: "2026-01-01", numbers, bonus: 45 });
@@ -23,5 +23,7 @@ describe("next pattern analysis", () => {
     expect(analysis.matchingRounds).toBe(2);
     expect(analysis.candidates[0]).toMatchObject({ pattern: [1, 2, 1, 1, 1], transitionCount: 1 });
     expect(analysis.candidates[1]).toMatchObject({ pattern: [2, 1, 1, 1, 1], transitionCount: 1 });
+    expect(recommendedNextPattern(analysis)).toBeUndefined();
+    expect(MIN_NEXT_PATTERN_MATCHES).toBeGreaterThan(analysis.matchingRounds);
   });
 });

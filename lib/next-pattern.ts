@@ -1,6 +1,7 @@
 import type { Draw } from "@/lib/types";
 
 export const NEXT_PATTERN_WINDOW = 100;
+export const MIN_NEXT_PATTERN_MATCHES = 8;
 export const DEFAULT_NUMBER_RANGES = [
   [1, 10],
   [11, 20],
@@ -36,6 +37,11 @@ export function patternKey(pattern: Pattern): string {
 
 export function formatPattern(pattern: Pattern): string {
   return pattern.join("·");
+}
+
+export function recommendedNextPattern(analysis: NextPatternAnalysis): Pattern | undefined {
+  if (analysis.matchingRounds < MIN_NEXT_PATTERN_MATCHES) return undefined;
+  return analysis.candidates[0]?.pattern;
 }
 
 export function analyzeNextPatterns(draws: Draw[], windowSize = NEXT_PATTERN_WINDOW): NextPatternAnalysis {

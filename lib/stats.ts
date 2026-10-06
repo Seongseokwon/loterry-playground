@@ -34,6 +34,7 @@ export function aggregateNumberStats(draws: Draw[]): NumberStat[] {
       lastSeenRound,
       gap: lastSeenRound ? latestRound - lastSeenRound : sorted.length,
       countRecent10: sorted.slice(0, 10).filter((draw) => draw.numbers.includes(number)).length,
+      countRecent30: sorted.slice(0, 30).filter((draw) => draw.numbers.includes(number)).length,
       countRecent50: sorted.slice(0, 50).filter((draw) => draw.numbers.includes(number)).length,
       countRecent100: sorted.slice(0, 100).filter((draw) => draw.numbers.includes(number)).length,
     };

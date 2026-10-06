@@ -18,6 +18,7 @@ export interface NumberStat {
   lastSeenRound: number;
   gap: number;
   countRecent10: number;
+  countRecent30: number;
   countRecent50: number;
   countRecent100: number;
 }
