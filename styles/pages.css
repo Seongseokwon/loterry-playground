@@ -129,6 +129,8 @@
 .draw-actions { position: sticky; bottom: 16px; z-index: 20; margin-top: 28px; padding: 12px; border: 1px solid var(--color-border); border-radius: var(--radius-btn-xl); background: color-mix(in srgb, var(--color-canvas) 94%, transparent); backdrop-filter: blur(10px); }
 .draw-actions p { margin-top: 6px; }
 .generation-progress { margin-top: 12px; }
+.generation-progress-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.generation-progress-head p { margin-top: 0 !important; }
 .generation-progress-track { height: 8px; overflow: hidden; border-radius: 999px; background: var(--color-surface); }
 .generation-progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--color-primary); transition: width 120ms ease; }
 .result-games { padding-block: 8px; }

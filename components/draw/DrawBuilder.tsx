@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { ProductButton } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { ConditionChip } from "@/components/lotto/ConditionChip";
@@ -18,6 +18,7 @@ import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair" | "birthday" | "next-pattern";
 type SumMode = "none" | "narrow" | "wide" | "custom";
 type GenerationMode = "preset" | "custom";
+type GenerationProgress = { current: number; total: number; rate: number; remainingSeconds: number | null };
 
 const COUNT_OPTIONS = [0, 1, 2, 3, 4, 5, 6] as const;
 
@@ -54,8 +55,11 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [maxSameTail, setMaxSameTail] = useState<DrawConditions["maxSameTail"]>();
   const [generationCount, setGenerationCount] = useState(1);
   const [generationMode, setGenerationMode] = useState<GenerationMode>("preset");
-  const [generationProgress, setGenerationProgress] = useState<{ current: number; total: number } | null>(null);
+  const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
   const [generating, setGenerating] = useState(false);
+  const [generationError, setGenerationError] = useState("");
+  const workerRef = useRef<Worker | null>(null);
+  const resolveWorkerRef = useRef<(() => void) | null>(null);
   const [result, setResult] = useState<DrawResult | null>(null);
   const [saved, setSaved] = useState(false);
   const [saveGameIndex, setSaveGameIndex] = useState(0);
@@ -110,17 +114,22 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     setSaved(false);
     setSaveGameIndex(0);
     setSaveError("");
+    setGenerationError("");
     setLimitNotice(null);
     setPendingSave(null);
     setResult(null);
     setGenerating(true);
-    setGenerationProgress({ current: 0, total });
+    setGenerationProgress({ current: 0, total, rate: 0, remainingSeconds: null });
     try {
       const worker = new Worker(new URL("../../lib/draw-worker.ts", import.meta.url));
+      workerRef.current = worker;
       await new Promise<void>((resolve, reject) => {
-        worker.onmessage = (event: MessageEvent<{ type: "progress"; current: number; total: number } | { type: "complete"; result: DrawResult | null }>) => {
+        resolveWorkerRef.current = resolve;
+        worker.onmessage = (event: MessageEvent<{ type: "progress"; current: number; total: number; elapsedMs: number } | { type: "complete"; result: DrawResult | null }>) => {
           if (event.data.type === "progress") {
-            setGenerationProgress({ current: event.data.current, total: event.data.total });
+            const elapsedSeconds = Math.max(event.data.elapsedMs / 1000, 0.001);
+            const rate = Math.round(event.data.current / elapsedSeconds);
+            setGenerationProgress({ current: event.data.current, total: event.data.total, rate, remainingSeconds: rate > 0 ? Math.ceil((event.data.total - event.data.current) / rate) : null });
             return;
           }
           setResult(event.data.result);
@@ -133,11 +142,25 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           total,
           keepLastOnly: generationMode === "custom",
         });
-      }).finally(() => worker.terminate());
+      }).finally(() => {
+        worker.terminate();
+        workerRef.current = null;
+        resolveWorkerRef.current = null;
+      });
+    } catch {
+      setGenerationError("번호 생성 작업을 실행하지 못했어요. 다시 시도해 주세요.");
     } finally {
       setGenerating(false);
       setGenerationProgress(null);
     }
+  };
+
+  const cancelGeneration = () => {
+    if (!workerRef.current) return;
+    workerRef.current.terminate();
+    resolveWorkerRef.current?.();
+    workerRef.current = null;
+    resolveWorkerRef.current = null;
   };
 
   const toggleFixed = (number: number) => {
@@ -431,7 +454,8 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
 
       <div className="draw-actions">
         <ProductButton className="full" loading={generating} onClick={() => void runDraw()}>번호 뽑기</ProductButton>
-        {generationProgress && generationProgress.total > 10 && <div className="generation-progress" role="status" aria-live="polite"><div className="generation-progress-track"><span style={{ width: `${(generationProgress.current / generationProgress.total) * 100}%` }} /></div><p className="body-small">{generationProgress.total}회 중 {generationProgress.current}회 조합을 만들고 있어요</p></div>}
+        {generationProgress && generationProgress.total > 10 && <div className="generation-progress" role="status" aria-live="polite"><div className="generation-progress-head"><p className="body-small">{generationProgress.current === 0 ? "추첨 조건을 준비하고 있어요…" : `${generationProgress.total.toLocaleString("ko-KR")}회 중 ${generationProgress.current.toLocaleString("ko-KR")}회 조합 계산 중`}</p><ProductButton size="small" tone="weak" onClick={cancelGeneration}>중단</ProductButton></div><div className="generation-progress-track"><span style={{ width: `${(generationProgress.current / generationProgress.total) * 100}%` }} /></div><p className="body-small">{generationProgress.current > 0 ? `초당 ${generationProgress.rate.toLocaleString("ko-KR")}개 · ${generationProgress.remainingSeconds === null ? "남은 시간 계산 중" : `약 ${Math.ceil(generationProgress.remainingSeconds / 60)}분 ${generationProgress.remainingSeconds % 60}초 남음`}` : "계산 속도를 측정하고 있어요"}</p></div>}
+        {generationError && <p className="archive-error" role="alert">{generationError}</p>}
         <p className="body-small center">조건을 고르지 않으면 완전 랜덤으로 뽑아요</p>
       </div>
 

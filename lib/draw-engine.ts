@@ -7,6 +7,15 @@ import type { DrawContext, DrawRequest, DrawResult, LottoNumber, NumberStat, Pai
 export const HOT_WEIGHT = { low: 1.15, mid: 1.35, high: 1.6 } as const;
 const MAX_ATTEMPTS = 5000;
 const ALL_NUMBERS = Array.from({ length: 45 }, (_, index) => index + 1);
+type PreparedDrawData = {
+  hotTop: Set<number>;
+  coldTop: Set<number>;
+  pairWeights: Map<number, number>;
+  maxPairWeight: number;
+  pastKeys: Set<string>;
+};
+
+const preparedCache = new WeakMap<object, WeakMap<object, PreparedDrawData>>();
 
 /** Convert birthday strings to their day-of-month lotto numbers (1~31). */
 export function mapBirthdayDates(dates: string[]): LottoNumber[] {
@@ -109,6 +118,33 @@ function pairWeightMap(pairStats: PairStat[], base: LottoNumber[], topK: number)
   return weights;
 }
 
+function prepareDrawData(request: DrawRequest, context: DrawContext): PreparedDrawData {
+  const requestCache = preparedCache.get(context as object) ?? new WeakMap<object, PreparedDrawData>();
+  const cached = requestCache.get(request as object);
+  if (cached) return cached;
+
+  const hotTop = new Set<number>();
+  if (request.conditions.hot) {
+    [...context.stats]
+      .sort((a, b) => statValue(b, request.conditions.hot!.window) - statValue(a, request.conditions.hot!.window))
+      .slice(0, 15)
+      .forEach((stat) => hotTop.add(stat.number));
+  }
+  const coldTop = new Set([...context.stats].sort((a, b) => b.gap - a.gap).slice(0, request.conditions.cold?.poolSize ?? 0).map((stat) => stat.number));
+  const pairs = request.conditions.pair ? aggregatePairStats(context.pastDraws.slice(0, 100)) : context.pairStats ?? [];
+  const pairWeights = request.conditions.pair ? pairWeightMap(pairs, request.conditions.pair.base, request.conditions.pair.topK) : new Map<number, number>();
+  const prepared = {
+    hotTop,
+    coldTop,
+    pairWeights,
+    maxPairWeight: Math.max(...pairWeights.values(), 0),
+    pastKeys: new Set(context.pastDraws.map((draw) => draw.numbers.join(","))),
+  };
+  requestCache.set(request as object, prepared);
+  preparedCache.set(context as object, requestCache);
+  return prepared;
+}
+
 export function drawNumbers(request: DrawRequest, context: DrawContext): DrawResult {
   const fixed = [...new Set(request.conditions.fixed ?? [])].filter((number) => Number.isInteger(number) && number >= 1 && number <= 45);
   const pairBase = [...new Set(request.conditions.pair?.base ?? [])].filter((number) => Number.isInteger(number) && number >= 1 && number <= 45);
@@ -129,23 +165,15 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
     return { games: [], appliedChips: chipLabels(request), attempts: 0, relaxed: [...relaxed, ...relaxationSuggestions(request)] };
   }
 
-  const hotTop = new Set<number>();
-  if (request.conditions.hot) {
-    [...context.stats].sort((a, b) => statValue(b, request.conditions.hot!.window) - statValue(a, request.conditions.hot!.window)).slice(0, 15).forEach((stat) => hotTop.add(stat.number));
-  }
-  const coldTop = new Set([...context.stats].sort((a, b) => b.gap - a.gap).slice(0, request.conditions.cold?.poolSize ?? 0).map((stat) => stat.number));
-  const pairs = request.conditions.pair ? aggregatePairStats(context.pastDraws.slice(0, 100)) : context.pairStats ?? [];
-  const pairWeights = request.conditions.pair ? pairWeightMap(pairs, pairBase, request.conditions.pair.topK) : new Map<number, number>();
-  const maxPairWeight = Math.max(...pairWeights.values(), 0);
+  const prepared = prepareDrawData(request, context);
   const weightFor = (number: number) => {
     let weight = 1;
-    if (request.conditions.hot && hotTop.has(number)) weight *= HOT_WEIGHT[request.conditions.hot.weight];
-    if (request.conditions.cold && coldTop.has(number)) weight *= 1.35;
-    if (request.conditions.pair && pairWeights.has(number)) weight *= 1 + ((pairWeights.get(number) ?? 0) / Math.max(maxPairWeight, 1)) * 2;
+    if (request.conditions.hot && prepared.hotTop.has(number)) weight *= HOT_WEIGHT[request.conditions.hot.weight];
+    if (request.conditions.cold && prepared.coldTop.has(number)) weight *= 1.35;
+    if (request.conditions.pair && prepared.pairWeights.has(number)) weight *= 1 + ((prepared.pairWeights.get(number) ?? 0) / Math.max(prepared.maxPairWeight, 1)) * 2;
     return weight;
   };
 
-  const pastKeys = new Set(context.pastDraws.map((draw) => draw.numbers.join(",")));
   const gameKeys = new Set<string>();
   const games: LottoNumber[][] = [];
   let attempts = 0;
@@ -187,7 +215,7 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
     if (selected.length !== 6) continue;
     selected.sort((a, b) => a - b);
     const key = selected.join(",");
-    if (gameKeys.has(key) || !passesPatterns(selected, request, pastKeys)) continue;
+    if (gameKeys.has(key) || !passesPatterns(selected, request, prepared.pastKeys)) continue;
     gameKeys.add(key);
     games.push(selected);
   }
