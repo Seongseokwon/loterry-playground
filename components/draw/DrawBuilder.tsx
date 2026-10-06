@@ -18,9 +18,22 @@ import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair" | "birthday" | "next-pattern";
 type SumMode = "none" | "narrow" | "wide" | "custom";
 type GenerationMode = "preset" | "custom";
-type GenerationProgress = { current: number; total: number; rate: number; remainingSeconds: number | null };
+type GenerationProgress = { current: number; total: number; rate: number; elapsedSeconds: number; remainingSeconds: number | null };
 
 const COUNT_OPTIONS = [0, 1, 2, 3, 4, 5, 6] as const;
+
+function formatDuration(seconds: number) {
+  if (seconds < 60) return `${Math.max(1, Math.round(seconds))}초`;
+  const minutes = Math.floor(seconds / 60);
+  const remainder = Math.round(seconds % 60);
+  return remainder ? `${minutes}분 ${remainder}초` : `${minutes}분`;
+}
+
+function formatEtaRange(seconds: number) {
+  const minimum = Math.max(1, Math.floor(seconds * 0.75));
+  const maximum = Math.max(minimum + 1, Math.ceil(seconds * 1.35));
+  return `${formatDuration(minimum)}~${formatDuration(maximum)}`;
+}
 
 const presetCopy: Record<Preset, { title: string; copy: string }> = {
   random: { title: "완전 랜덤", copy: "아무 조건도 더하지 않고 1부터 45까지 같은 기회로 여섯 번호를 골라요. 기본 필터만 적용되며, 언제든 다른 조건을 함께 켤 수 있어요." },
@@ -119,7 +132,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     setPendingSave(null);
     setResult(null);
     setGenerating(true);
-    setGenerationProgress({ current: 0, total, rate: 0, remainingSeconds: null });
+    setGenerationProgress({ current: 0, total, rate: 0, elapsedSeconds: 0, remainingSeconds: null });
     try {
       const worker = new Worker(new URL("../../lib/draw-worker.ts", import.meta.url));
       workerRef.current = worker;
@@ -129,7 +142,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           if (event.data.type === "progress") {
             const elapsedSeconds = Math.max(event.data.elapsedMs / 1000, 0.001);
             const rate = Math.round(event.data.current / elapsedSeconds);
-            setGenerationProgress({ current: event.data.current, total: event.data.total, rate, remainingSeconds: rate > 0 ? Math.ceil((event.data.total - event.data.current) / rate) : null });
+            setGenerationProgress({ current: event.data.current, total: event.data.total, rate, elapsedSeconds, remainingSeconds: rate > 0 ? (event.data.total - event.data.current) / rate : null });
             return;
           }
           setResult(event.data.result);
@@ -454,7 +467,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
 
       <div className="draw-actions">
         <ProductButton className="full" loading={generating} onClick={() => void runDraw()}>번호 뽑기</ProductButton>
-        {generationProgress && generationProgress.total > 10 && <div className="generation-progress" role="status" aria-live="polite"><div className="generation-progress-head"><p className="body-small">{generationProgress.current === 0 ? "추첨 조건을 준비하고 있어요…" : `${generationProgress.total.toLocaleString("ko-KR")}회 중 ${generationProgress.current.toLocaleString("ko-KR")}회 조합 계산 중`}</p><ProductButton size="small" tone="weak" onClick={cancelGeneration}>중단</ProductButton></div><div className="generation-progress-track"><span style={{ width: `${(generationProgress.current / generationProgress.total) * 100}%` }} /></div><p className="body-small">{generationProgress.current > 0 ? `초당 ${generationProgress.rate.toLocaleString("ko-KR")}개 · ${generationProgress.remainingSeconds === null ? "남은 시간 계산 중" : `약 ${Math.ceil(generationProgress.remainingSeconds / 60)}분 ${generationProgress.remainingSeconds % 60}초 남음`}` : "계산 속도를 측정하고 있어요"}</p></div>}
+        {generationProgress && generationProgress.total > 10 && <div className="generation-progress" role="status" aria-live="polite"><div className="generation-progress-head"><p className="body-small">{generationProgress.current === 0 ? "추첨 조건을 준비하고 있어요…" : `${generationProgress.total.toLocaleString("ko-KR")}회 중 ${generationProgress.current.toLocaleString("ko-KR")}회 조합 계산 중`}</p><ProductButton size="small" tone="weak" onClick={cancelGeneration}>중단</ProductButton></div><div className="generation-progress-track"><span style={{ width: `${(generationProgress.current / generationProgress.total) * 100}%` }} /></div><p className="body-small">{generationProgress.current > 0 ? `평균 약 ${generationProgress.rate.toLocaleString("ko-KR")}개/초 · 경과 ${formatDuration(generationProgress.elapsedSeconds)}` : "계산 속도를 측정하고 있어요"}</p>{generationProgress.current > 0 && generationProgress.elapsedSeconds >= 2 && generationProgress.remainingSeconds !== null && <p className="body-small">예상 남은 시간 약 {formatEtaRange(generationProgress.remainingSeconds)} <span className="progress-disclaimer">(평균 속도 기준)</span></p>}</div>}
         {generationError && <p className="archive-error" role="alert">{generationError}</p>}
         <p className="body-small center">조건을 고르지 않으면 완전 랜덤으로 뽑아요</p>
       </div>

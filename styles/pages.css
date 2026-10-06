@@ -133,6 +133,7 @@
 .generation-progress-head p { margin-top: 0 !important; }
 .generation-progress-track { height: 8px; overflow: hidden; border-radius: 999px; background: var(--color-surface); }
 .generation-progress-track span { display: block; height: 100%; border-radius: inherit; background: var(--color-primary); transition: width 120ms ease; }
+.progress-disclaimer { color: var(--color-muted); }
 .result-games { padding-block: 8px; }
 .result-game { display: flex; align-items: center; justify-content: space-between; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--color-border); }
 .result-game:last-child { border-bottom: 0; }
