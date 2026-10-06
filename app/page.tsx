@@ -5,6 +5,7 @@ import { Badge } from "@/components/ui/Badge";
 import { lottoDraws } from "@/data/draws";
 import { aggregateNumberStats } from "@/lib/stats";
 import { formatKoreanDate, formatWon } from "@/lib/format";
+import { SavedResultNotice } from "@/components/home/SavedResultNotice";
 
 export default function Home() {
   const latest = lottoDraws[0];
@@ -29,6 +30,8 @@ export default function Home() {
           <Link className="text-link" href={`/results/${latest.round}`}>회차 자세히 보기 →</Link>
         </div>
       </section>
+
+      <SavedResultNotice />
 
       <section className="quick-grid section">
         <Link href="/check" className="quick-card card card-weak">
