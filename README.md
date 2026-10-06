@@ -29,4 +29,4 @@ pnpm build
 
 모든 화면은 `Draw` 도메인 타입과 `data/draws.ts` 진입점을 사용합니다.
 
-최신 회차를 추가 수집할 때는 `collect-draws.cmd` 또는 `pnpm collect:draws -- --target=<회차>`를 실행합니다.
+최신 회차는 GitHub Actions가 토요일 추첨 시간대에 자동 확인하고, 새 데이터가 있으면 `data/lotto-draws.json`을 커밋해 배포를 갱신합니다. 수동 실행은 Actions의 `Collect lotto draws` 워크플로에서 `Run workflow`를 선택하거나 로컬에서 `pnpm collect:latest`를 실행하면 됩니다. 전체 백필은 `collect-draws.cmd` 또는 `pnpm collect:draws -- --target=<회차>`를 사용합니다.

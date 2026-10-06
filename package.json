@@ -12,6 +12,7 @@
     "test": "vitest run",
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "collect:draws": "node scripts/collect-lotto-draws.mjs",
+    "collect:latest": "node scripts/collect-latest-draw.mjs",
     "collect:draws:test": "node scripts/collect-lotto-draws.mjs --self-test"
   },
   "dependencies": {

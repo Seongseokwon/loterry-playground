@@ -11,6 +11,12 @@
 npm run collect:draws
 ```
 
+최신 회차만 확인할 때는 다음 명령을 사용합니다. 새 회차가 없으면 파일을 변경하지 않습니다.
+
+```powershell
+pnpm collect:latest
+```
+
 현재 회차가 바뀌면 `--target`으로 지정할 수 있습니다. 현재 스냅샷은 2026-10-03 추첨분인 1244회까지 반영되어 있습니다.
 
 ```powershell
