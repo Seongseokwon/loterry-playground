@@ -28,6 +28,18 @@ export type SaveSetResult =
   | { status: "saved"; item: SavedSet; removed?: SavedSet }
   | { status: "limit"; oldest: SavedSet };
 
+function isSavedSetBackup(value: unknown): value is Partial<SavedSet> {
+  if (!value || typeof value !== "object") return false;
+  const item = value as Partial<SavedSet>;
+  return Array.isArray(item.numbers)
+    && item.numbers.length === 6
+    && item.numbers.every((number) => Number.isInteger(number) && number >= 1 && number <= 45)
+    && new Set(item.numbers).size === 6
+    && Number.isInteger(item.targetRound)
+    && typeof item.targetRound === "number"
+    && item.targetRound >= 1;
+}
+
 export class StorageUnavailableError extends Error {
   constructor() {
     super("이 브라우저에서는 보관함을 사용할 수 없습니다.");
@@ -138,6 +150,28 @@ export async function saveSavedSet(input: SavedSetInput, options: { replaceOldes
   } finally {
     database.close();
   }
+}
+
+export async function importSavedSets(value: unknown) {
+  if (!Array.isArray(value) || value.length === 0 || value.some((item) => !isSavedSetBackup(item))) {
+    throw new TypeError("백업 파일의 저장 번호 형식이 올바르지 않습니다.");
+  }
+
+  let imported = 0;
+  for (const item of value) {
+    const outcome = await saveSavedSet({
+      numbers: [...item.numbers!].sort((a, b) => a - b) as SavedSetNumbers,
+      conditions: item.conditions ?? {},
+      conditionLabels: Array.isArray(item.conditionLabels) ? (item.conditionLabels as unknown[]).filter((label: unknown): label is string => typeof label === "string").slice(0, 30) : [],
+      label: typeof item.label === "string" ? item.label : "저장한 번호",
+      memo: typeof item.memo === "string" ? item.memo : "",
+      targetRound: item.targetRound!,
+      presetId: typeof item.presetId === "string" ? item.presetId : undefined,
+    });
+    if (outcome.status === "limit") break;
+    imported += 1;
+  }
+  return imported;
 }
 
 export async function deleteSavedSet(id: string) {

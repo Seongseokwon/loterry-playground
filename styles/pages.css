@@ -115,6 +115,8 @@
 .failure-card h3 { margin-bottom: 14px; }
 .archive-panel { display: flex; flex-direction: column; gap: 16px; }
 .archive-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.archive-tools { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.archive-notice { color: var(--color-weak-fg); font-size: 14px; }
 .archive-list { display: flex; flex-direction: column; gap: 12px; }
 .archive-item { display: flex; flex-direction: column; gap: 16px; }
 .archive-item-head, .archive-meta, .archive-rank { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -271,6 +273,7 @@
   .saved-frequency-table th, .saved-frequency-table td { padding-inline: 4px; }
   .saved-frequency-table th:nth-child(4), .saved-frequency-table td:nth-child(4) { display: none; }
   .saved-frequency-table th:nth-child(5), .saved-frequency-table td:nth-child(5) { width: 42%; }
+  .archive-tools { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 767px) {
