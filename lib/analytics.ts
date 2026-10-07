@@ -1,4 +1,4 @@
-export type AnalyticsEventName = "draw_started" | "draw_completed" | "draw_failed" | "draw_cancelled" | "set_saved" | "saved_result_viewed";
+export type AnalyticsEventName = "draw_started" | "draw_completed" | "draw_failed" | "draw_cancelled" | "set_saved" | "saved_result_viewed" | "result_shared";
 export type AnalyticsEventProperties = Record<string, boolean | number | string | undefined>;
 
 export function trackEvent(name: AnalyticsEventName, properties: AnalyticsEventProperties = {}) {

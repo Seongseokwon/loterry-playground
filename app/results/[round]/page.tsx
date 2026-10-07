@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { BallRow } from "@/components/lotto/BallRow";
+import { ShareResultButton } from "@/components/lotto/ShareResultButton";
 import { Badge } from "@/components/ui/Badge";
 import { formatKoreanDate, formatWon } from "@/lib/format";
 import { getDrawByRound, getDraws } from "@/lib/repositories/draws";
@@ -62,6 +63,7 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ r
         <Badge tone="fill">추첨 완료</Badge>
         <BallRow draw={draw} size="lg" />
         <p className="body-small">앞의 6개가 당첨번호, + 뒤가 보너스 번호예요.</p>
+        <ShareResultButton round={draw.round} numbers={draw.numbers} bonus={draw.bonus} />
       </section>
       <section className="section detail-money card">
         <h3>1등 당첨 정보</h3>
