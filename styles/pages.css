@@ -43,6 +43,14 @@
 .detail-nav { display: flex; justify-content: space-between; padding: 24px 4px; color: var(--color-weak-fg); font-weight: 600; }
 .official-note { display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .content-guide { display: flex; flex-direction: column; gap: 12px; color: var(--color-body); }
+.strategy-battle { display: flex; flex-direction: column; }
+.strategy-battle-intro { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.strategy-battle-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; margin-top: 24px; }
+.strategy-card { display: flex; flex-direction: column; gap: 12px; }
+.strategy-card-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.strategy-card-head h2 { margin-top: 8px; font-size: 21px; line-height: 30px; }
+.strategy-numbers { margin: 4px 0; }
+.strategy-battle-link { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .wheel-builder { display: flex; flex-direction: column; gap: 12px; margin-top: 20px; padding: 16px; border-radius: var(--radius-btn-m); }
 .wheel-builder .section-head { margin-bottom: 0; }
 .switch-label { display: inline-flex; align-items: center; gap: 6px; color: var(--color-weak-fg); font-size: 14px; font-weight: 700; white-space: nowrap; }
@@ -297,6 +305,8 @@
   .archive-tools { align-items: flex-start; flex-direction: column; }
   .generation-summary-grid { grid-template-columns: 1fr; }
   .frequency-actions { align-items: flex-start; flex-direction: column; }
+  .strategy-battle-intro, .strategy-battle-link { align-items: flex-start; flex-direction: column; }
+  .strategy-battle-grid { grid-template-columns: 1fr; }
 }
 
 @media (max-width: 767px) {

@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Link from "next/link";
 import { DrawBuilder } from "@/components/draw/DrawBuilder";
 
 export const metadata: Metadata = { title: "번호 추첨", description: "조건을 조합하거나 완전 랜덤으로 로또 번호를 골라보세요." };
@@ -20,6 +21,13 @@ export default function DrawPage() {
             <p>반복 추첨은 화면 렌더링 부담을 줄이기 위해 마지막에 생성된 조합과 요약 정보만 보여줍니다. 큰 횟수에서는 진행률과 경과 시간을 함께 안내합니다.</p>
           </details>
         </div>
+      </section>
+      <section className="section card card-weak strategy-battle-link">
+        <div>
+          <h2>어떤 방식이 맞을지 고민된다면?</h2>
+          <p className="body-small">랜덤·핫넘버·미출현·반전 픽을 한 번에 비교하고 마음에 드는 조합을 골라 보세요.</p>
+        </div>
+        <Link className="product-button product-weak" href="/draw/strategy-battle">전략 대결 시작</Link>
       </section>
     </div>
   );
