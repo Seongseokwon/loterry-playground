@@ -1,6 +1,5 @@
 "use client";
 
-import Script from "next/script";
 import { useEffect } from "react";
 
 declare global {
@@ -23,6 +22,19 @@ export function GoogleAnalytics({ measurementId }: { measurementId?: string }) {
   useEffect(() => {
     if (!measurementId) return;
 
+    window.dataLayer = window.dataLayer || [];
+    window.gtag = window.gtag || ((...args: unknown[]) => window.dataLayer.push(args));
+    window.gtag("js", new Date());
+    window.gtag("config", measurementId, { send_page_view: true });
+
+    if (!document.querySelector(`script[data-lotto-ga="${measurementId}"]`)) {
+      const script = document.createElement("script");
+      script.async = true;
+      script.src = `https://www.googletagmanager.com/gtag/js?id=${measurementId}`;
+      script.dataset.lottoGa = measurementId;
+      document.head.appendChild(script);
+    }
+
     const handleAnalyticsEvent = (event: Event) => {
       const detail = (event as CustomEvent<AnalyticsDetail>).detail;
       if (!detail?.name || typeof window.gtag !== "function") return;
@@ -42,15 +54,5 @@ export function GoogleAnalytics({ measurementId }: { measurementId?: string }) {
 
   if (!measurementId) return null;
 
-  return (
-    <>
-      <Script src={`https://www.googletagmanager.com/gtag/js?id=${measurementId}`} strategy="afterInteractive" />
-      <Script id="google-analytics" strategy="afterInteractive">
-        {`window.dataLayer = window.dataLayer || [];
-window.gtag = function(){ window.dataLayer.push(arguments); };
-window.gtag('js', new Date());
-window.gtag('config', '${measurementId}', { send_page_view: true });`}
-      </Script>
-    </>
-  );
+  return null;
 }
