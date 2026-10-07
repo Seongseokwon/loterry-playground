@@ -58,6 +58,7 @@ export interface DrawResult {
   successfulIterations?: number;
   failedIterations?: number;
   numberFrequency?: Record<string, number>;
+  wheel?: { candidateCount: number; requestedGames: number; actualGames: number; minimumGames: number };
 }
 
 export interface DrawContext {

@@ -87,6 +87,21 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ r
         <div><strong>결과는 공식 사이트에서도 확인해 주세요</strong><p className="body-small">동행복권 공개 회차 데이터를 수집해 제공합니다.</p></div>
         <a className="text-link" href="https://www.dhlottery.co.kr/" target="_blank" rel="noreferrer">공식 확인: 동행복권 ↗</a>
       </section>
+      <section className="section content-guide">
+        <p className="eyebrow">제{draw.round}회 결과 읽는 방법</p>
+        <h2>당첨번호와 보너스 번호를 확인해 보세요</h2>
+        <p>위의 앞 6개 숫자가 기본 당첨번호이고, + 뒤의 숫자가 보너스 번호입니다. 실제 당첨 여부와 지급 기준은 구매한 복권과 동행복권 공식 발표를 기준으로 확인해야 합니다.</p>
+        <div className="faq-list">
+          <details>
+            <summary>번호를 저장하고 다음 회차에 다시 볼 수 있나요?</summary>
+            <p>번호 생성이나 내 번호 조회 화면에서 저장한 조합은 이 브라우저의 보관함에서 확인할 수 있습니다. 브라우저 저장소를 삭제하기 전에는 백업 기능을 이용해 주세요.</p>
+          </details>
+          <details>
+            <summary>이 결과로 다음 당첨번호를 예측할 수 있나요?</summary>
+            <p>아니요. 과거 당첨번호와 통계는 탐색을 돕는 참고 자료일 뿐이며, 어떤 조합의 당첨을 보장하거나 확률을 높인다고 볼 수 없습니다.</p>
+          </details>
+        </div>
+      </section>
     </div>
   );
 }

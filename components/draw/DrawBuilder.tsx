@@ -15,6 +15,7 @@ import { analyzeNextPatterns, formatPattern, MIN_NEXT_PATTERN_MATCHES, recommend
 import { saveSavedSet, type SavedSet, type SavedSetInput, type SavedSetNumbers } from "@/lib/storage";
 import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 import { generationBucket, trackEvent } from "@/lib/analytics";
+import { buildCoverageWheel } from "@/lib/coverage-wheel";
 
 type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair" | "birthday" | "next-pattern";
 type SumMode = "none" | "narrow" | "wide" | "custom";
@@ -69,6 +70,8 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [maxSameTail, setMaxSameTail] = useState<DrawConditions["maxSameTail"]>();
   const [generationCount, setGenerationCount] = useState(1);
   const [generationMode, setGenerationMode] = useState<GenerationMode>("preset");
+  const [wheelEnabled, setWheelEnabled] = useState(false);
+  const [wheelGameCount, setWheelGameCount] = useState(10);
   const [generationProgress, setGenerationProgress] = useState<GenerationProgress | null>(null);
   const [generating, setGenerating] = useState(false);
   const [generationError, setGenerationError] = useState("");
@@ -133,6 +136,37 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     setLimitNotice(null);
     setPendingSave(null);
     setResult(null);
+
+    if (wheelEnabled) {
+      if (fixed.length < 7) {
+        setGenerationError("커버리지 휠링은 후보 번호를 7개 이상 골라야 사용할 수 있어요.");
+        return;
+      }
+      setGenerating(true);
+      const requestSnapshot = request();
+      lastRequestRef.current = requestSnapshot;
+      trackEvent("draw_started", { preset: "coverage-wheel", mode: "wheel", generationCount: String(wheelGameCount) });
+      try {
+        const wheel = buildCoverageWheel(fixed, wheelGameCount);
+        setResult({
+          games: wheel.games,
+          appliedChips: [`커버리지 휠링 · 후보 ${fixed.length}개`, `요청 ${wheel.requestedGames}게임`, `실제 ${wheel.actualGames}게임`],
+          attempts: wheel.actualGames,
+          successfulIterations: 1,
+          failedIterations: 0,
+          numberFrequency: wheel.frequency,
+          wheel: { candidateCount: fixed.length, requestedGames: wheel.requestedGames, actualGames: wheel.actualGames, minimumGames: wheel.minimumGames },
+        });
+        trackEvent("draw_completed", { preset: "coverage-wheel", mode: "wheel", generatedGames: wheel.actualGames, successfulIterations: 1, failedIterations: 0 });
+      } catch {
+        trackEvent("draw_failed", { preset: "coverage-wheel", mode: "wheel", reason: "wheel_error" });
+        setGenerationError("커버리지 조합을 만들지 못했어요. 후보 번호를 확인해 주세요.");
+      } finally {
+        setGenerating(false);
+      }
+      return;
+    }
+
     setGenerating(true);
     setGenerationProgress({ current: 0, total, rate: 0, elapsedSeconds: 0, remainingSeconds: null });
     const requestSnapshot = request();
@@ -390,6 +424,20 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
             ) : (
               <NumberGrid excluded={excluded} disabled={fixed} selected={excluded} maxSelected={39} onToggle={toggleExcluded} />
             )}
+            {editing === "fixed" && fixed.length >= 7 && (
+              <div className="wheel-builder card-weak">
+                <div className="section-head">
+                  <div><h4>커버리지 휠링</h4><p className="body-small">고른 후보 번호를 여러 조합에 고르게 나눠 넣어요.</p></div>
+                  <label className="switch-label"><input type="checkbox" checked={wheelEnabled} onChange={(event) => setWheelEnabled(event.currentTarget.checked)} /> 사용</label>
+                </div>
+                {wheelEnabled && <>
+                  <div className="segmented" role="group" aria-label="커버리지 휠링 조합 수">
+                    {[5, 10, 20].map((count) => <button type="button" key={count} className={wheelGameCount === count ? "segment-on" : ""} aria-pressed={wheelGameCount === count} onClick={() => setWheelGameCount(count)}>{count}게임</button>)}
+                  </div>
+                  <p className="body-small">후보 {fixed.length}개에는 최소 {Math.ceil(fixed.length / 6)}게임이 필요해요. 선택한 게임 수보다 적으면 필요한 최소 게임 수까지 자동으로 만들어요.</p>
+                </>}
+              </div>
+            )}
             {editing === "fixed" && fixed.length === 6 && (
               <div className="manual-save-box">
                 <div><strong>6개를 모두 골랐어요</strong><p className="body-small">선택한 번호를 보관함에 바로 저장할 수 있어요.</p></div>
@@ -502,7 +550,8 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
             <div className="chip-wrap">{result.appliedChips.map((chip) => <Badge key={chip}>{chip}</Badge>)}</div>
             {result.relaxed?.map((item) => <p className="body-small" key={item}>{item}</p>)}
             <div className="generation-summary card card-weak">
-              <strong>{generationMode === "custom" ? `${((result.successfulIterations ?? 0) + (result.failedIterations ?? 0)).toLocaleString("ko-KR")}번째 조합까지 계산했어요` : "반복 추첨을 완료했어요"}</strong>
+              <strong>{result.wheel ? `${result.wheel.candidateCount}개 후보를 ${result.wheel.actualGames}게임으로 분산했어요` : generationMode === "custom" ? `${((result.successfulIterations ?? 0) + (result.failedIterations ?? 0)).toLocaleString("ko-KR")}번째 조합까지 계산했어요` : "반복 추첨을 완료했어요"}</strong>
+              {result.wheel && <p className="body-small">각 후보 번호가 최소 한 번 이상 포함되도록 조합을 나눴어요. 후보 수에 따라 요청한 게임 수보다 더 만들 수 있어요.</p>}
               <div className="generation-summary-grid">
                 <span>성공 <b>{(result.successfulIterations ?? result.games.length).toLocaleString("ko-KR")}회</b></span>
                 <span>조건 충돌 <b>{(result.failedIterations ?? 0).toLocaleString("ko-KR")}회</b></span>
