@@ -17,7 +17,7 @@ import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 import { generationBucket, trackEvent } from "@/lib/analytics";
 import { buildCoverageWheel } from "@/lib/coverage-wheel";
 
-type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair" | "birthday" | "next-pattern";
+type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair" | "birthday" | "next-pattern" | "anti-crowd";
 type SumMode = "none" | "narrow" | "wide" | "custom";
 type GenerationMode = "preset" | "custom";
 type GenerationProgress = { current: number; total: number; rate: number; elapsedSeconds: number; remainingSeconds: number | null };
@@ -46,6 +46,7 @@ const presetCopy: Record<Preset, { title: string; copy: string }> = {
   pair: { title: "궁합수", copy: "과거 회차에서 함께 나온 횟수가 많은 번호를 참고해요. 기준 번호는 조합에 포함하고, 상위 K개 궁합수에 등장한 동반 번호에 가중치를 더해요." },
   birthday: { title: "기념일 번호", copy: "입력한 날짜의 일을 1~31 번호로 바꾸고, 부족한 자리는 1~31 안에서 랜덤으로 채워요. 날짜를 번호로 바꾸는 방식에는 분명한 편향이 있어요." },
   "next-pattern": { title: "다음 패턴 추천", copy: "최근 100회에서 현재 패턴 다음에 가장 자주 이어진 1위 패턴으로 번호를 구성해요." },
+  "anti-crowd": { title: "반전 픽", copy: "생일 범위와 규칙적인 모양에만 몰리지 않도록 32~45 번호를 일부 포함하고 연속·끝수 반복이 심한 조합을 피해서 덜 뻔한 번호를 골라요. 당첨 확률을 높이는 방식은 아니에요." },
 };
 
 export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
@@ -55,6 +56,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [hot, setHot] = useState(preset === "hot");
   const [cold, setCold] = useState(preset === "cold");
   const [carryover, setCarryover] = useState(preset === "carryover");
+  const [antiCrowd, setAntiCrowd] = useState(preset === "anti-crowd");
   const [pairBase, setPairBase] = useState<number[]>([]);
   const [pairTopK, setPairTopK] = useState(20);
   const [pairEditing, setPairEditing] = useState(false);
@@ -120,6 +122,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       lowCount,
       sumRange,
       maxSameTail,
+      antiCrowd,
     },
     filters: { noConsecutive3, noPastJackpot, noSameTail3 },
     games: 1,
@@ -335,6 +338,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           <PresetCard href="/draw/pair" icon="hot" title="궁합수" description="동시출현 Top K" active={preset === "pair"} />
           <PresetCard href="/draw/birthday" icon="fixed" title="기념일" description="날짜를 번호로" active={preset === "birthday"} />
           <PresetCard href="/draw/next-pattern" icon="next-pattern" title="다음 패턴" description="1위 패턴으로 뽑기" active={preset === "next-pattern"} />
+          <PresetCard href="/draw/anti-crowd" icon="fixed" title="반전 픽" description="덜 뻔한 조합" active={preset === "anti-crowd"} />
         </div>
       </section>
 
@@ -411,6 +415,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           <ConditionChip icon="hot" label="핫넘버" value="최근 30회 · 중" checked={hot} onChange={setHot} />
           <ConditionChip icon="cold" label="미출현" value="상위 20개" checked={cold} onChange={setCold} />
           <ConditionChip icon="carryover" label="이월수" value="1개" checked={carryover} onChange={setCarryover} />
+          <ConditionChip icon="exclude" label="반전 픽" value="덜 뻔한 조합" checked={antiCrowd} onChange={setAntiCrowd} />
         </div>
 
         {editing && (

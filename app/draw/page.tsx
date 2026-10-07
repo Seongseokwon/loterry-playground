@@ -9,7 +9,7 @@ export default function DrawPage() {
       <DrawBuilder />
       <section className="section content-guide">
         <h2>로또 번호 추첨 이용 안내</h2>
-        <p>완전 랜덤부터 핫넘버·미출현 번호·고정 번호·다음 패턴까지 원하는 조건을 조합해 번호를 만들어 볼 수 있습니다. 통계 조건은 번호 선택을 돕는 참고 기능이며 실제 당첨을 예측하거나 보장하지 않습니다.</p>
+        <p>완전 랜덤부터 핫넘버·미출현 번호·고정 번호·다음 패턴·반전 픽까지 원하는 조건을 조합해 번호를 만들어 볼 수 있습니다. 통계 조건은 번호 선택을 돕는 참고 기능이며 실제 당첨을 예측하거나 보장하지 않습니다.</p>
         <div className="faq-list">
           <details>
             <summary>번호를 6개보다 많이 선택하면 어떻게 되나요?</summary>

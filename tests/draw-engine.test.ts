@@ -74,6 +74,13 @@ describe("drawNumbers", () => {
     expect(result.appliedChips).toContain("끝수 2개 이하");
   });
 
+  it("반전 픽은 높은 번호를 포함하고 뻔한 패턴을 피한다", () => {
+    const result = drawNumbers({ ...base, conditions: { antiCrowd: true } }, context);
+    expect(result.games).toHaveLength(1);
+    expect(result.games[0].filter((number) => number >= 32).length).toBeGreaterThanOrEqual(2);
+    expect(result.appliedChips).toContain("반전 픽 · 덜 뻔한 조합");
+  });
+
   it("궁합수 기준 번호를 포함하고 조건 칩을 기록한다", () => {
     const result = drawNumbers({ ...base, conditions: { pair: { base: [7], topK: 20 } } }, context);
     expect(result.games).toHaveLength(1);

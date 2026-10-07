@@ -50,6 +50,10 @@ function maxTailCount(numbers: number[]) {
   return Math.max(...counts.values());
 }
 
+function passesAntiCrowdPattern(numbers: number[]) {
+  return numbers.filter((number) => number >= 32).length >= 2 && maxTailCount(numbers) <= 2 && !hasConsecutive3(numbers);
+}
+
 function passesPatterns(numbers: number[], request: DrawRequest, pastKeys: Set<string>) {
   const { conditions, filters } = request;
   if (conditions.rangePattern) {
@@ -60,6 +64,7 @@ function passesPatterns(numbers: number[], request: DrawRequest, pastKeys: Set<s
   if (conditions.lowCount !== undefined && numbers.filter((number) => number <= 22).length !== conditions.lowCount) return false;
   if (conditions.sumRange && (numbers.reduce((sum, number) => sum + number, 0) < conditions.sumRange[0] || numbers.reduce((sum, number) => sum + number, 0) > conditions.sumRange[1])) return false;
   if (conditions.maxSameTail !== undefined && maxTailCount(numbers) > conditions.maxSameTail) return false;
+  if (conditions.antiCrowd && !passesAntiCrowdPattern(numbers)) return false;
   if (filters.noConsecutive3 && hasConsecutive3(numbers)) return false;
   if (filters.noSameTail3 && maxTailCount(numbers) >= 3) return false;
   if (filters.noPastJackpot && pastKeys.has(numbers.join(","))) return false;
@@ -81,6 +86,7 @@ function chipLabels(request: DrawRequest) {
   if (conditions.sumRange) chips.push(`합계 ${conditions.sumRange[0]}~${conditions.sumRange[1]}`);
   if (conditions.maxSameTail !== undefined) chips.push(`끝수 ${conditions.maxSameTail}개 이하`);
   if (conditions.rangePattern) chips.push(`다음 패턴 · ${conditions.rangePattern.join("·")}`);
+  if (conditions.antiCrowd) chips.push("반전 픽 · 덜 뻔한 조합");
   if (filters.noConsecutive3) chips.push("3연속 번호 제외");
   if (filters.noPastJackpot) chips.push("과거 1등 조합 제외");
   if (filters.noSameTail3) chips.push("같은 끝수 3개 제외");
@@ -100,6 +106,7 @@ function relaxationSuggestions(request: DrawRequest) {
   if (request.conditions.birthday) suggestions.push("기념일 날짜 조정");
   if (request.filters.noConsecutive3) suggestions.push("3연속 제외 끄기");
   if (request.filters.noSameTail3) suggestions.push("같은 끝수 필터 끄기");
+  if (request.conditions.antiCrowd) suggestions.push("반전 픽 끄기");
   return suggestions.length ? suggestions : ["조건 초기화"];
 }
 
@@ -171,6 +178,7 @@ export function drawNumbers(request: DrawRequest, context: DrawContext): DrawRes
     if (request.conditions.hot && prepared.hotTop.has(number)) weight *= HOT_WEIGHT[request.conditions.hot.weight];
     if (request.conditions.cold && prepared.coldTop.has(number)) weight *= 1.35;
     if (request.conditions.pair && prepared.pairWeights.has(number)) weight *= 1 + ((prepared.pairWeights.get(number) ?? 0) / Math.max(prepared.maxPairWeight, 1)) * 2;
+    if (request.conditions.antiCrowd) weight *= number >= 32 ? 1.55 : 0.8;
     return weight;
   };
 

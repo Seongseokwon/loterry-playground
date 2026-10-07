@@ -40,6 +40,7 @@ export interface DrawConditions {
   lowCount?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   sumRange?: [number, number];
   maxSameTail?: 1 | 2;
+  antiCrowd?: boolean;
   rangePattern?: Pattern;
 }
 
