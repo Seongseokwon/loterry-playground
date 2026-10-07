@@ -10,7 +10,7 @@ import { judgeRank, type RankResult } from "@/lib/rank";
 import { saveSavedSet, type SavedSetNumbers } from "@/lib/storage";
 import { trackEvent } from "@/lib/analytics";
 import { analyzeTicketNumbers } from "@/lib/ticket-analysis";
-import { TicketScanner } from "@/components/check/TicketScanner";
+import { TicketScanner, type TicketScanResult } from "@/components/check/TicketScanner";
 
 export function CheckPanel() {
   const [selected, setSelected] = useState<number[]>([]);
@@ -59,7 +59,13 @@ export function CheckPanel() {
   };
   return (
     <div className="check-page-stack">
-      <TicketScanner onNumbersDetected={(numbers) => { setSelected(numbers); setResult(null); setSaved(false); setSaveError(""); }} />
+      <TicketScanner onNumbersDetected={(scan: TicketScanResult) => {
+        setSelected(scan.numbers);
+        if (scan.round && lottoDraws.some((item) => item.round === scan.round)) setRound(scan.round);
+        setResult(null);
+        setSaved(false);
+        setSaveError("");
+      }} />
       <div className="check-layout">
       <section className="card stack">
         <label className="round-select">확인할 회차

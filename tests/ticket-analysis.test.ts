@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 import { analyzeTicketNumbers } from "@/lib/ticket-analysis";
+import { parseTicketPayload } from "@/components/check/TicketScanner";
 
 describe("analyzeTicketNumbers", () => {
   it("번호 조합의 형태와 주요 지표를 계산한다", () => {
@@ -29,5 +30,13 @@ describe("analyzeTicketNumbers", () => {
     expect(analyzeTicketNumbers([1, 2, 3, 4, 5])).toBeNull();
     expect(analyzeTicketNumbers([1, 2, 3, 4, 5, 46])).toBeNull();
     expect(analyzeTicketNumbers([1, 1, 2, 3, 4, 5])).toBeNull();
+  });
+
+  it("QR payload는 명시적인 번호 형식만 파싱한다", () => {
+    expect(parseTicketPayload('{"round":1244,"numbers":[3,8,14,22,35,41]}')).toEqual({ round: 1244, numbers: [3, 8, 14, 22, 35, 41] });
+    expect(parseTicketPayload("numbers=3,8,14,22,35,41")).toEqual({ numbers: [3, 8, 14, 22, 35, 41] });
+    expect(parseTicketPayload("https://example.test/ticket?round=1244&numbers=3,8,14,22,35,41")).toEqual({ round: 1244, numbers: [3, 8, 14, 22, 35, 41] });
+    expect(parseTicketPayload("round 1244 game 3 8 14 22 35 41")).toBeNull();
+    expect(parseTicketPayload("https://example.test/ticket?id=1244-3-8-14-22-35-41")).toBeNull();
   });
 });

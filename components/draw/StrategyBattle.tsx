@@ -33,7 +33,7 @@ export function StrategyBattle() {
   const [results, setResults] = useState<BattleResult[]>([]);
   const [generating, setGenerating] = useState(false);
   const [savingId, setSavingId] = useState<string | null>(null);
-  const [savedId, setSavedId] = useState<string | null>(null);
+  const [savedIds, setSavedIds] = useState<Set<string>>(() => new Set());
   const [error, setError] = useState("");
   const stats = useMemo(() => aggregateNumberStats(lottoDraws), []);
   const targetRound = lottoDraws[0].round + 1;
@@ -42,7 +42,7 @@ export function StrategyBattle() {
     if (generating) return;
     setGenerating(true);
     setError("");
-    setSavedId(null);
+    setSavedIds(new Set());
     trackEvent("draw_started", { preset: "strategy-battle", mode: "comparison", generationCount: generationBucket(strategies.length) });
 
     try {
@@ -63,7 +63,7 @@ export function StrategyBattle() {
 
   async function saveStrategy(item: BattleResult) {
     const game = item.result?.games[0];
-    if (!game || savingId) return;
+    if (!game || savingId || savedIds.has(item.id)) return;
     setSavingId(item.id);
     try {
       const outcome = await saveSavedSet({
@@ -79,7 +79,7 @@ export function StrategyBattle() {
         setError("보관함 저장 한도에 도달했어요. 기존 조합을 정리한 뒤 다시 시도해 주세요.");
         return;
       }
-      setSavedId(item.id);
+      setSavedIds((current) => new Set(current).add(item.id));
       trackEvent("set_saved", { source: "strategy-battle", strategy: item.id, targetRound });
     } catch {
       setError("보관함에 저장하지 못했어요. 보관함 상태를 확인해 주세요.");
@@ -107,7 +107,7 @@ export function StrategyBattle() {
             <div className="strategy-card-head"><div><Badge tone={item.id === "anti-crowd" ? "fill" : "weak"}>{item.label}</Badge><h2>{item.label}</h2></div><span className="body-small">제{targetRound}회 참고</span></div>
             <p className="body-small">{item.description}</p>
             {game ? <div className="numbers strategy-numbers">{game.map((number, index) => <LottoBall key={number} number={number} size="sm" delay={index * 70} />)}</div> : <p className="body-small danger">현재 조건에서는 조합을 만들지 못했어요.</p>}
-            {game && <ProductButton size="small" tone="weak" loading={savingId === item.id} disabled={savedId === item.id} onClick={() => void saveStrategy(item)}>{savedId === item.id ? "보관함에 저장했어요" : "이 조합 저장"}</ProductButton>}
+            {game && <ProductButton size="small" tone="weak" loading={savingId === item.id} disabled={savedIds.has(item.id)} onClick={() => void saveStrategy(item)}>{savedIds.has(item.id) ? "보관함에 저장했어요" : "이 조합 저장"}</ProductButton>}
           </article>;
         })}
       </div>}

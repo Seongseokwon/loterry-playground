@@ -68,8 +68,18 @@ export function ArchivePanel() {
       .then((items) => {
         if (!active) return;
         setSets(items);
+        const trackedRounds = new Set<number>();
         items.forEach((item) => {
-          if (lottoDraws.some((draw) => draw.round === item.targetRound)) trackEvent("saved_result_viewed", { targetRound: item.targetRound });
+          if (!lottoDraws.some((draw) => draw.round === item.targetRound) || trackedRounds.has(item.targetRound)) return;
+          trackedRounds.add(item.targetRound);
+          const sessionKey = `lotto:saved-result-viewed:${item.targetRound}`;
+          try {
+            if (window.sessionStorage.getItem(sessionKey)) return;
+            window.sessionStorage.setItem(sessionKey, "1");
+          } catch {
+            // Storage access can be blocked; the in-memory set still prevents duplicates in this render.
+          }
+          trackEvent("saved_result_viewed", { targetRound: item.targetRound });
         });
       })
       .catch(() => { if (active) setError("보관함을 불러오지 못했어요. 브라우저 저장 권한을 확인해 주세요."); })

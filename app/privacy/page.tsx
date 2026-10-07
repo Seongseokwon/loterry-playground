@@ -20,7 +20,7 @@ export default function PrivacyPage() {
         </section>
         <section className="card info-section">
           <h2>분석 이벤트</h2>
-          <p>추첨 시작·완료, 번호 저장, 결과 확인, 공유와 같은 서비스 사용 이벤트는 현재 브라우저 안에서만 전달되는 계약으로 연결되어 있습니다. 외부 분석 서비스로 전송하지 않습니다.</p>
+          <p>추첨 시작·완료, 번호 저장, 결과 확인, 공유, 용지 촬영 시작·완료·인식 결과와 같은 서비스 사용 이벤트는 Google Analytics 4가 설정된 운영 환경에서 전송될 수 있습니다. 원본 사진, QR 원문, 선택한 번호 자체는 분석 이벤트에 포함하지 않습니다.</p>
         </section>
         <section className="card card-weak info-section">
           <h2>주의할 점</h2>
