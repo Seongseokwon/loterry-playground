@@ -28,7 +28,7 @@ export type SaveSetResult =
   | { status: "saved"; item: SavedSet; removed?: SavedSet }
   | { status: "limit"; oldest: SavedSet };
 
-function isSavedSetBackup(value: unknown): value is Partial<SavedSet> {
+export function isSavedSetBackup(value: unknown): value is Partial<SavedSet> {
   if (!value || typeof value !== "object") return false;
   const item = value as Partial<SavedSet>;
   return Array.isArray(item.numbers)
@@ -124,7 +124,9 @@ export async function getSavedSets(): Promise<SavedSet[]> {
   try {
     const transaction = database.transaction(STORE_NAME, "readonly");
     const items = await requestResult(transaction.objectStore(STORE_NAME).getAll()) as SavedSet[];
-    return items.filter((item) => !item.deletedAt).sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+    return items
+      .filter((item) => !item.deletedAt && isSavedSetBackup(item))
+      .sort((a, b) => (b.updatedAt ?? b.createdAt ?? "").localeCompare(a.updatedAt ?? a.createdAt ?? ""));
   } finally {
     database.close();
   }

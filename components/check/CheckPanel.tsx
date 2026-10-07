@@ -18,12 +18,14 @@ export function CheckPanel() {
   const [result, setResult] = useState<RankResult | null>(null);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [scanNeedsConfirmation, setScanNeedsConfirmation] = useState(false);
   const [saveError, setSaveError] = useState("");
   const draw = useMemo(() => lottoDraws.find((item) => item.round === round) ?? lottoDraws[0], [round]);
   const analysis = useMemo(() => analyzeTicketNumbers(selected), [selected]);
   const toggle = (number: number) => {
     setResult(null);
     setSaved(false);
+    setScanNeedsConfirmation(false);
     setSaveError("");
     setSelected((current) => current.includes(number) ? current.filter((item) => item !== number) : current.length < 6 ? [...current, number].sort((a, b) => a - b) : current);
   };
@@ -61,6 +63,7 @@ export function CheckPanel() {
     <div className="check-page-stack">
       <TicketScanner onNumbersDetected={(scan: TicketScanResult) => {
         setSelected(scan.numbers);
+        setScanNeedsConfirmation(true);
         if (scan.round && lottoDraws.some((item) => item.round === scan.round)) setRound(scan.round);
         setResult(null);
         setSaved(false);
@@ -79,7 +82,7 @@ export function CheckPanel() {
         </div>
         <div className="row">
           <ProductButton tone="weak" size="large" onClick={() => { setSelected([]); setResult(null); setSaved(false); setSaveError(""); }}>다시 고르기</ProductButton>
-          <ProductButton size="large" disabled={selected.length !== 6} onClick={() => setResult(judgeRank(selected, draw))}>당첨 확인하기</ProductButton>
+          <ProductButton size="large" disabled={selected.length !== 6} onClick={() => { setResult(judgeRank(selected, draw)); if (scanNeedsConfirmation) { trackEvent("ticket_scan_confirmed", { source: "check", targetRound: round }); setScanNeedsConfirmation(false); } }}>당첨 확인하기</ProductButton>
           <ProductButton tone="weak" size="large" loading={saving} disabled={selected.length !== 6 || saved} onClick={() => void saveSelected()}>{saved ? "저장했어요" : "번호 저장"}</ProductButton>
         </div>
         {saveError && <p className="archive-error" role="alert">{saveError}</p>}

@@ -123,6 +123,7 @@ export function TicketScanner({ onNumbersDetected }: { onNumbersDetected: (resul
   const startCamera = async () => {
     if (active || starting) return;
     if (!navigator.mediaDevices?.getUserMedia) {
+      trackEvent("ticket_scan_failed", { source: "camera", reason: "camera_unsupported" });
       setError("이 브라우저에서는 카메라를 사용할 수 없어요. 사진 업로드나 번호 직접 선택을 이용해 주세요.");
       return;
     }
@@ -134,8 +135,17 @@ export function TicketScanner({ onNumbersDetected }: { onNumbersDetected: (resul
       const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: { ideal: "environment" } }, audio: false });
       streamRef.current = stream;
       setActive(true);
-    } catch {
-      trackEvent("ticket_scan_failed", { source: "camera", reason: "permission_or_device" });
+    } catch (cause) {
+      const reason = cause instanceof DOMException
+        ? cause.name === "NotAllowedError" || cause.name === "SecurityError"
+          ? "permission_denied"
+          : cause.name === "NotFoundError"
+            ? "camera_not_found"
+            : cause.name === "NotReadableError"
+              ? "camera_in_use"
+              : "camera_start_error"
+        : "camera_start_error";
+      trackEvent("ticket_scan_failed", { source: "camera", reason });
       setError("카메라 권한을 허용하지 않았거나 카메라를 찾을 수 없어요. 사진 업로드나 번호 직접 선택을 이용해 주세요.");
       stopCamera();
     } finally {
