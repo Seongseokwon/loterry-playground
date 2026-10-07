@@ -3,6 +3,7 @@ import "./globals.css";
 import "../styles/components.css";
 import "../styles/pages.css";
 import { AppFooter, AppHeader } from "@/components/SiteChrome";
+import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
 const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? "https://lotto-play-ground.vercel.app";
 const description = "이번 주 번호를 확인하고, 조건을 조합해 재미있게 번호를 골라보세요.";
@@ -24,6 +25,7 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
+        <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
         <AppHeader />
         <main className="site-main">{children}</main>
         <AppFooter />
