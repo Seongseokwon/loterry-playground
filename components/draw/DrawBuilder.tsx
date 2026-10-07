@@ -270,6 +270,9 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     }
   };
   const failed = result && result.games.length === 0;
+  const frequentNumbers = result?.numberFrequency
+    ? Object.entries(result.numberFrequency).sort(([, a], [, b]) => b - a).slice(0, 3)
+    : [];
 
   return (
     <>
@@ -490,6 +493,16 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           <div className="stack" aria-live="polite">
             <div className="chip-wrap">{result.appliedChips.map((chip) => <Badge key={chip}>{chip}</Badge>)}</div>
             {result.relaxed?.map((item) => <p className="body-small" key={item}>{item}</p>)}
+            <div className="generation-summary card card-weak">
+              <strong>{generationMode === "custom" ? `${((result.successfulIterations ?? 0) + (result.failedIterations ?? 0)).toLocaleString("ko-KR")}번째 조합까지 계산했어요` : "반복 추첨을 완료했어요"}</strong>
+              <div className="generation-summary-grid">
+                <span>성공 <b>{(result.successfulIterations ?? result.games.length).toLocaleString("ko-KR")}회</b></span>
+                <span>조건 충돌 <b>{(result.failedIterations ?? 0).toLocaleString("ko-KR")}회</b></span>
+                <span>내부 시도 <b>{result.attempts.toLocaleString("ko-KR")}회</b></span>
+              </div>
+              {frequentNumbers.length > 0 && <p className="body-small">반복 결과에서 자주 포함된 번호: {frequentNumbers.map(([number, count]) => `${number}번(${count}회)`).join(" · ")}</p>}
+              {generationMode === "custom" && <p className="body-small">아래에는 마지막 조합 하나만 보여드려요.</p>}
+            </div>
             <div className="result-games card">
               {result.games.map((game, gameIndex) => (
                 <div className="result-game" key={game.join("-")}>

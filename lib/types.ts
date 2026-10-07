@@ -57,6 +57,7 @@ export interface DrawResult {
   relaxed?: string[];
   successfulIterations?: number;
   failedIterations?: number;
+  numberFrequency?: Record<string, number>;
 }
 
 export interface DrawContext {

@@ -32,6 +32,7 @@ workerScope.onmessage = ({ data }) => {
   let lastGenerated: DrawResult | null = null;
   let successfulIterations = 0;
   let failedIterations = 0;
+  const numberFrequency: Record<string, number> = {};
   const startedAt = performance.now();
   let lastProgressAt = startedAt;
 
@@ -40,6 +41,10 @@ workerScope.onmessage = ({ data }) => {
     lastGenerated = next;
     if (next.games.length === data.request.games) successfulIterations += 1;
     else failedIterations += 1;
+    next.games.flat().forEach((number) => {
+      const key = String(number);
+      numberFrequency[key] = (numberFrequency[key] ?? 0) + 1;
+    });
     if (!data.keepLastOnly) generated.push(next);
 
     const now = performance.now();
@@ -59,6 +64,7 @@ workerScope.onmessage = ({ data }) => {
       attempts: results.reduce((totalAttempts, item) => totalAttempts + item.attempts, 0),
       successfulIterations,
       failedIterations,
+      numberFrequency,
       relaxed: [...new Set(results.flatMap((item) => item.relaxed ?? []))],
     } : null,
   });
