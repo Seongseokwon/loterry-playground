@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { normalizeApiRow } from "@/lib/collector/source.mjs";
+import { isPublishedDraw, normalizeApiRow } from "@/lib/collector/source.mjs";
 
 describe("lotto collector source", () => {
   it("normalizes and sorts a valid API row", () => {
@@ -41,5 +41,10 @@ describe("lotto collector source", () => {
       rnk1WnAmt: 1,
       rnk1WnNope: 1,
     })).toThrow("Invalid number set");
+  });
+
+  it("rejects future-dated draws before collection writes", () => {
+    expect(isPublishedDraw({ date: "2026-10-10" }, "2026-10-07")).toBe(false);
+    expect(isPublishedDraw({ date: "2026-10-03" }, "2026-10-07")).toBe(true);
   });
 });

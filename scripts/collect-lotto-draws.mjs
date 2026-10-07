@@ -1,7 +1,7 @@
 import { mkdir, readFile, rename, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { API_URL, normalizeApiRow, requestBatch, validateDrawCollection } from "../lib/collector/source.mjs";
+import { API_URL, isPublishedDraw, normalizeApiRow, requestBatch, validateDrawCollection } from "../lib/collector/source.mjs";
 
 const DEFAULT_INTERVAL_MS = 15_000;
 const DEFAULT_TARGET_ROUND = 1244;
@@ -81,6 +81,7 @@ async function main() {
   if (!Array.isArray(existingDraws)) throw new TypeError("Existing output is not an array.");
   if (existingDraws.length > 0) validateDrawCollection(existingDraws);
   const drawsByRound = new Map(existingDraws.map((draw) => [draw.round, draw]));
+  if (existingDraws.some((draw) => !isPublishedDraw(draw))) throw new Error("Existing lotto data contains an unpublished future draw.");
   let lastRequestStartedAt = 0;
   let stopping = false;
 
@@ -117,7 +118,7 @@ async function main() {
       if (lastRequestStartedAt > 0 && elapsed < options.intervalMs) await delay(options.intervalMs - elapsed);
       lastRequestStartedAt = Date.now();
       await saveState("running", { requestingRound: queryRound, firstMissingRound: missingBefore, lastRequestAt: new Date(lastRequestStartedAt).toISOString() });
-      const draws = await requestBatch(queryRound);
+      const draws = (await requestBatch(queryRound)).filter((draw) => isPublishedDraw(draw));
       const received = new Set(draws.map((draw) => draw.round));
       if (missingBefore !== undefined && !received.has(missingBefore)) {
         throw new Error(`Response for ${queryRound} did not include first missing round ${missingBefore}.`);
