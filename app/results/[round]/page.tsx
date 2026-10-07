@@ -20,10 +20,20 @@ export async function generateMetadata({ params }: { params: Promise<{ round: st
   const draws = await getDraws();
   const draw = draws.find((item) => item.round === Number(round));
   const isIndexable = draw ? draws.indexOf(draw) < INDEXABLE_ROUNDS : false;
+  const description = draw
+    ? `제${draw.round}회 로또 당첨번호 ${draw.numbers.join(", ")}와 보너스 ${draw.bonus}번, 1등 당첨 정보를 확인하세요.`
+    : `제${round}회 로또 당첨번호와 1등 정보를 확인하세요.`;
   return {
     title: `제${round}회 당첨번호`,
-    description: `제${round}회 로또 당첨번호와 1등 정보를 확인하세요.`,
+    description,
     robots: { index: isIndexable, follow: isIndexable },
+    ...(draw ? { alternates: { canonical: `/results/${draw.round}` } } : {}),
+    openGraph: draw ? {
+      title: `제${draw.round}회 로또 당첨번호`,
+      description,
+      type: "article",
+      url: `/results/${draw.round}`,
+    } : undefined,
   };
 }
 
@@ -34,8 +44,19 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ r
   const index = draws.findIndex((item) => item.round === draw.round);
   const newer = index > 0 ? draws[index - 1] : null;
   const older = index < draws.length - 1 ? draws[index + 1] : null;
+  const structuredData = {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    headline: `제${draw.round}회 로또 당첨번호`,
+    description: `제${draw.round}회 로또 당첨번호와 1등 당첨 정보를 확인하세요.`,
+    datePublished: draw.date,
+    dateModified: draw.date,
+    mainEntityOfPage: `/results/${draw.round}`,
+    author: { "@type": "Organization", name: "로또 플레이그라운드" },
+  };
   return (
     <div className="page page-narrow">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <header className="page-header"><p className="eyebrow">{formatKoreanDate(draw.date)}</p><h1>제{draw.round}회 당첨번호</h1></header>
       <section className="detail-result card">
         <Badge tone="fill">추첨 완료</Badge>
@@ -45,6 +66,15 @@ export default async function ResultDetailPage({ params }: { params: Promise<{ r
       <section className="section detail-money card">
         <h3>1등 당첨 정보</h3>
         <dl><div><dt>당첨자</dt><dd>{draw.firstWinners}명</dd></div><div><dt>1인당 당첨금</dt><dd>{formatWon(draw.firstWinAmount)}</dd></div><div><dt>총 판매금액</dt><dd>{formatWon(draw.totalSell)}</dd></div></dl>
+      </section>
+      <section className="section card card-weak">
+        <h3>다음으로 해볼까요?</h3>
+        <p className="body-small">이번 회차를 확인했다면 번호를 직접 넣어 보거나 다음 패턴으로 새 조합을 만들어 보세요.</p>
+        <div className="status-actions">
+          <Link className="product-button product-primary" href="/draw/fixed">내 번호 넣기</Link>
+          <Link className="product-button product-weak" href="/draw/next-pattern">다음 패턴으로 뽑기</Link>
+          <Link className="product-button product-weak" href="/archive">내 보관함 보기</Link>
+        </div>
       </section>
       <div className="detail-nav">
         {older ? <Link href={`/results/${older.round}`}>← 제{older.round}회</Link> : <span />}
