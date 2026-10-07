@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { lottoDraws } from "@/data/draws";
 import { judgeRank, type RankResult } from "@/lib/rank";
 import { saveSavedSet, type SavedSetNumbers } from "@/lib/storage";
+import { trackEvent } from "@/lib/analytics";
 
 export function CheckPanel() {
   const [selected, setSelected] = useState<number[]>([]);
@@ -43,7 +44,10 @@ export function CheckPanel() {
         if (!replace) return;
         outcome = await saveSavedSet(input, { replaceOldest: true });
       }
-      if (outcome.status === "saved") setSaved(true);
+      if (outcome.status === "saved") {
+        setSaved(true);
+        trackEvent("set_saved", { source: "check", targetRound: input.targetRound });
+      }
     } catch {
       setSaveError("번호를 저장하지 못했어요. 브라우저 저장 권한을 확인해 주세요.");
     } finally {

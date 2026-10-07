@@ -14,6 +14,7 @@ import { aggregateNumberStats } from "@/lib/stats";
 import { analyzeNextPatterns, formatPattern, MIN_NEXT_PATTERN_MATCHES, recommendedNextPattern } from "@/lib/next-pattern";
 import { saveSavedSet, type SavedSet, type SavedSetInput, type SavedSetNumbers } from "@/lib/storage";
 import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
+import { generationBucket, trackEvent } from "@/lib/analytics";
 
 type Preset = "random" | "hot" | "cold" | "fixed" | "carryover" | "pair" | "birthday" | "next-pattern";
 type SumMode = "none" | "narrow" | "wide" | "custom";
@@ -136,6 +137,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
     setGenerationProgress({ current: 0, total, rate: 0, elapsedSeconds: 0, remainingSeconds: null });
     const requestSnapshot = request();
     lastRequestRef.current = requestSnapshot;
+    trackEvent("draw_started", { preset, mode: generationMode, generationCount: generationBucket(total) });
     try {
       const worker = new Worker(new URL("../../lib/draw-worker.ts", import.meta.url));
       workerRef.current = worker;
@@ -149,6 +151,8 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
             return;
           }
           setResult(event.data.result);
+          if (event.data.result?.games.length) trackEvent("draw_completed", { preset, mode: generationMode, generatedGames: event.data.result.games.length, successfulIterations: event.data.result.successfulIterations ?? 0, failedIterations: event.data.result.failedIterations ?? 0 });
+          else trackEvent("draw_failed", { preset, mode: generationMode, failedIterations: event.data.result?.failedIterations ?? total });
           resolve();
         };
         worker.onerror = () => reject(new Error("번호 생성 작업을 실행하지 못했어요."));
@@ -164,6 +168,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
         resolveWorkerRef.current = null;
       });
     } catch {
+      trackEvent("draw_failed", { preset, mode: generationMode, reason: "worker_error" });
       setGenerationError("번호 생성 작업을 실행하지 못했어요. 다시 시도해 주세요.");
     } finally {
       setGenerating(false);
@@ -173,6 +178,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
 
   const cancelGeneration = () => {
     if (!workerRef.current) return;
+    trackEvent("draw_cancelled", { preset, mode: generationMode });
     workerRef.current.terminate();
     resolveWorkerRef.current?.();
     workerRef.current = null;
@@ -223,6 +229,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
         return;
       }
       setSaved(true);
+      trackEvent("set_saved", { source: "draw", targetRound: input.targetRound });
       setPendingSave(null);
       setLimitNotice(null);
     } catch {
@@ -252,7 +259,10 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
         if (!replace) return;
         outcome = await saveSavedSet(input, { replaceOldest: true });
       }
-      if (outcome.status === "saved") setManualSaved(true);
+      if (outcome.status === "saved") {
+        setManualSaved(true);
+        trackEvent("set_saved", { source: "manual", targetRound: input.targetRound });
+      }
     } catch {
       setManualSaveError("선택한 번호를 저장하지 못했어요. 브라우저 저장 권한을 확인해 주세요.");
     } finally {

@@ -8,6 +8,7 @@ import { ProductButton } from "@/components/ui/Button";
 import { lottoDraws } from "@/data/draws";
 import { judgeRank } from "@/lib/rank";
 import { ARCHIVE_LIMIT, deleteSavedSet, getSavedSets, importSavedSets, isStorageAvailable, type SavedSet } from "@/lib/storage";
+import { trackEvent } from "@/lib/analytics";
 
 function formatCreatedAt(value: string) {
   const date = new Date(value);
@@ -64,7 +65,13 @@ export function ArchivePanel() {
   useEffect(() => {
     let active = true;
     getSavedSets()
-      .then((items) => { if (active) setSets(items); })
+      .then((items) => {
+        if (!active) return;
+        setSets(items);
+        items.forEach((item) => {
+          if (lottoDraws.some((draw) => draw.round === item.targetRound)) trackEvent("saved_result_viewed", { targetRound: item.targetRound });
+        });
+      })
       .catch(() => { if (active) setError("보관함을 불러오지 못했어요. 브라우저 저장 권한을 확인해 주세요."); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
