@@ -62,6 +62,12 @@ export function AppFooter() {
         <nav className="footer-nav" aria-label="푸터 메뉴">
           {navItems.map((item) => <Link href={item.href} key={item.href}>{item.label}</Link>)}
         </nav>
+        <nav className="footer-nav footer-info-nav" aria-label="서비스 안내">
+          <Link href="/about">서비스 소개</Link>
+          <Link href="/data-source">데이터 출처</Link>
+          <Link href="/privacy">개인정보 안내</Link>
+          <Link href="/contact">문의</Link>
+        </nav>
         <p>본 사이트는 동행복권 및 기획재정부와 무관한 비공식 정보 서비스입니다.</p>
         <p>제공되는 모든 번호 추첨과 통계는 재미를 위한 것이며, 당첨 확률에 영향을 주지 않습니다.</p>
         <p>만 19세 미만은 복권을 구매할 수 없습니다.</p>

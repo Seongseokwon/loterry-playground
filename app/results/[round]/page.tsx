@@ -34,6 +34,7 @@ export async function generateMetadata({ params }: { params: Promise<{ round: st
       description,
       type: "article",
       url: `/results/${draw.round}`,
+      images: [{ url: `/results/${draw.round}/opengraph-image`, width: 1200, height: 630, alt: `제${draw.round}회 로또 당첨번호` }],
     } : undefined,
   };
 }

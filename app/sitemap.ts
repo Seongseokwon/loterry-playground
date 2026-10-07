@@ -20,6 +20,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${siteOrigin}/draw`, changeFrequency: "weekly", priority: 0.8 },
     { url: `${siteOrigin}/stats`, changeFrequency: "weekly", priority: 0.7 },
     { url: `${siteOrigin}/check`, changeFrequency: "weekly", priority: 0.6 },
+    { url: `${siteOrigin}/about`, changeFrequency: "monthly", priority: 0.4 },
+    { url: `${siteOrigin}/data-source`, changeFrequency: "monthly", priority: 0.5 },
+    { url: `${siteOrigin}/privacy`, changeFrequency: "monthly", priority: 0.3 },
+    { url: `${siteOrigin}/contact`, changeFrequency: "monthly", priority: 0.3 },
     ...roundEntries,
   ];
 }
