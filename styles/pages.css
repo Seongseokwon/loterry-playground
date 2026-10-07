@@ -121,6 +121,7 @@
 .generation-summary-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
 .generation-summary-grid span { display: flex; flex-direction: column; gap: 2px; color: var(--color-muted); font-size: 13px; }
 .generation-summary-grid b { color: var(--color-foreground); font-size: 15px; }
+.frequency-actions { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .archive-list { display: flex; flex-direction: column; gap: 12px; }
 .archive-item { display: flex; flex-direction: column; gap: 16px; }
 .archive-item-head, .archive-meta, .archive-rank { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
@@ -279,6 +280,7 @@
   .saved-frequency-table th:nth-child(5), .saved-frequency-table td:nth-child(5) { width: 42%; }
   .archive-tools { align-items: flex-start; flex-direction: column; }
   .generation-summary-grid { grid-template-columns: 1fr; }
+  .frequency-actions { align-items: flex-start; flex-direction: column; }
 }
 
 @media (max-width: 767px) {

@@ -273,6 +273,14 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const frequentNumbers = result?.numberFrequency
     ? Object.entries(result.numberFrequency).sort(([, a], [, b]) => b - a).slice(0, 3)
     : [];
+  const addFrequentNumbers = () => {
+    const additions = frequentNumbers.map(([number]) => Number(number));
+    if (additions.length === 0) return;
+    setFixed((current) => [...new Set([...current, ...additions])].sort((a, b) => a - b));
+    setEditing("fixed");
+    setManualSaved(false);
+    setManualSaveError("");
+  };
 
   return (
     <>
@@ -500,8 +508,9 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
                 <span>조건 충돌 <b>{(result.failedIterations ?? 0).toLocaleString("ko-KR")}회</b></span>
                 <span>내부 시도 <b>{result.attempts.toLocaleString("ko-KR")}회</b></span>
               </div>
-              {frequentNumbers.length > 0 && <p className="body-small">반복 결과에서 자주 포함된 번호: {frequentNumbers.map(([number, count]) => `${number}번(${count}회)`).join(" · ")}</p>}
+              {frequentNumbers.length > 0 && <div className="frequency-actions"><p className="body-small">반복 결과에서 자주 포함된 번호: {frequentNumbers.map(([number, count]) => `${number}번(${count}회)`).join(" · ")}</p><ProductButton size="small" tone="weak" onClick={addFrequentNumbers}>선택 번호에 추가</ProductButton></div>}
               {generationMode === "custom" && <p className="body-small">아래에는 마지막 조합 하나만 보여드려요.</p>}
+              {frequentNumbers.length > 0 && fixed.length < 7 && <p className="body-small">현재 선택 번호가 6개 이하라 추가한 번호는 반드시 포함돼요. 후보 풀로 쓰려면 7개 이상 선택하세요.</p>}
             </div>
             <div className="result-games card">
               {result.games.map((game, gameIndex) => (
