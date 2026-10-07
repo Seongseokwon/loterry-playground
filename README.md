@@ -32,3 +32,5 @@ pnpm build
 모든 화면은 `Draw` 도메인 타입과 `data/draws.ts` 진입점을 사용합니다.
 
 최신 회차는 GitHub Actions가 토요일 추첨 시간대에 자동 확인하고, 새 데이터가 있으면 `data/lotto-draws.json`을 커밋해 배포를 갱신합니다. 수동 실행은 Actions의 `Collect lotto draws` 워크플로에서 `Run workflow`를 선택하거나 로컬에서 `pnpm collect:latest`를 실행하면 됩니다. 전체 백필은 `collect-draws.cmd` 또는 `pnpm collect:draws -- --target=<회차>`를 사용합니다.
+
+프로젝트 데이터를 건드리지 않고 최신 확정 회차만 확인하려면 `pnpm preview:latest` 또는 `node scripts/preview-latest-draw.mjs`를 실행합니다. 이 명령은 동행복권 API를 읽기만 하고 JSON·상태 파일을 수정하지 않습니다. 특정 회차를 정확히 확인하려면 `pnpm preview:latest -- --round=1244`처럼 `--round=<회차>`를 추가합니다. 해당 회차가 아직 발표되지 않았으면 최신 회차로 대체하지 않고 오류를 표시합니다.
