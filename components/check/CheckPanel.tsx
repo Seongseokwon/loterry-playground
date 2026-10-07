@@ -9,6 +9,8 @@ import { lottoDraws } from "@/data/draws";
 import { judgeRank, type RankResult } from "@/lib/rank";
 import { saveSavedSet, type SavedSetNumbers } from "@/lib/storage";
 import { trackEvent } from "@/lib/analytics";
+import { analyzeTicketNumbers } from "@/lib/ticket-analysis";
+import { TicketScanner } from "@/components/check/TicketScanner";
 
 export function CheckPanel() {
   const [selected, setSelected] = useState<number[]>([]);
@@ -18,6 +20,7 @@ export function CheckPanel() {
   const [saved, setSaved] = useState(false);
   const [saveError, setSaveError] = useState("");
   const draw = useMemo(() => lottoDraws.find((item) => item.round === round) ?? lottoDraws[0], [round]);
+  const analysis = useMemo(() => analyzeTicketNumbers(selected), [selected]);
   const toggle = (number: number) => {
     setResult(null);
     setSaved(false);
@@ -55,7 +58,9 @@ export function CheckPanel() {
     }
   };
   return (
-    <div className="check-layout">
+    <div className="check-page-stack">
+      <TicketScanner onNumbersDetected={(numbers) => { setSelected(numbers); setResult(null); setSaved(false); setSaveError(""); }} />
+      <div className="check-layout">
       <section className="card stack">
         <label className="round-select">확인할 회차
           <select value={round} onChange={(event) => { setRound(Number(event.target.value)); setResult(null); setSaved(false); setSaveError(""); }}>
@@ -75,6 +80,25 @@ export function CheckPanel() {
       </section>
 
       <aside className={`check-result card ${result && result.rank !== "낙첨" ? "card-weak" : ""}`} aria-live="polite">
+        {analysis && <section className="ticket-analysis" aria-label="내 번호 조합 분석">
+          <div className="ticket-analysis-head">
+            <div>
+              <p className="eyebrow">내 번호 리포트</p>
+              <h3>{analysis.primaryLabel}</h3>
+            </div>
+            <Badge tone="weak">재미 분석</Badge>
+          </div>
+          <div className="ticket-analysis-tags">{analysis.labels.map((label) => <span key={label}>{label}</span>)}</div>
+          <dl className="ticket-analysis-grid">
+            <div><dt>홀짝</dt><dd>{analysis.oddCount} : {analysis.evenCount}</dd></div>
+            <div><dt>낮은 수·높은 수</dt><dd>{analysis.lowCount} : {analysis.highCount}</dd></div>
+            <div><dt>번호 합계</dt><dd>{analysis.sum}</dd></div>
+            <div><dt>번호 범위</dt><dd>{analysis.span}</dd></div>
+            <div><dt>생일 번호(1~31)</dt><dd>{analysis.birthdayCount}개</dd></div>
+            <div><dt>연속 번호</dt><dd>{analysis.consecutivePairs}쌍</dd></div>
+          </dl>
+          <p className="body-small">번호의 모양을 설명하는 재미 기능이며, 어떤 조합도 당첨 확률을 높이거나 예측하지 않습니다.</p>
+        </section>}
         {!result ? (
           <div className="empty-result"><img className="empty-result-icon" src="/icons/footer-ticket.png" alt="" aria-hidden="true" /><h3>6개를 고르면 바로 확인해요</h3><p className="body-small">선택한 회차의 당첨번호와 안전하게 비교합니다.</p></div>
         ) : (
@@ -91,6 +115,7 @@ export function CheckPanel() {
           </div>
         )}
       </aside>
+      </div>
     </div>
   );
 }
