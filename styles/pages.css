@@ -369,3 +369,11 @@
   .sum-bucket small { font-size: 9px; }
   .sum-median span { transform: rotate(-45deg); transform-origin: left top; }
 }
+.pattern-lab select { max-width: 100%; padding: 8px; border: 1px solid #cbd5e1; border-radius: 8px; background: white; color: #182334; }
+.pattern-lab-controls { display: flex; flex-wrap: wrap; gap: 16px; margin: 12px 0; }
+.pattern-lab details { margin-top: 16px; }
+.pattern-lab details ul { max-height: 260px; overflow: auto; padding-left: 24px; }
+.pattern-lab input { margin-right: 8px; }
+.pattern-lab-table { overflow-x: auto; }
+.pattern-lab table { width: 100%; border-collapse: collapse; white-space: nowrap; }
+.pattern-lab th, .pattern-lab td { padding: 8px; text-align: left; border-bottom: 1px solid #e5e7eb; }

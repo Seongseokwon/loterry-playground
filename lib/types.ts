@@ -34,7 +34,7 @@ export interface DrawConditions {
   hot?: { window: 10 | 30 | 50 | 0; weight: "low" | "mid" | "high" };
   cold?: { poolSize: 15 | 20 | 25 };
   carryover?: { count: 1 | 2 };
-  pair?: { base: LottoNumber[]; topK: number };
+  pair?: { base: LottoNumber[]; topK: number; window?: number };
   birthday?: { dates: string[] };
   oddCount?: 0 | 1 | 2 | 3 | 4 | 5 | 6;
   lowCount?: 0 | 1 | 2 | 3 | 4 | 5 | 6;

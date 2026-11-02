@@ -138,7 +138,7 @@ function prepareDrawData(request: DrawRequest, context: DrawContext): PreparedDr
       .forEach((stat) => hotTop.add(stat.number));
   }
   const coldTop = new Set([...context.stats].sort((a, b) => b.gap - a.gap).slice(0, request.conditions.cold?.poolSize ?? 0).map((stat) => stat.number));
-  const pairs = request.conditions.pair ? aggregatePairStats(context.pastDraws.slice(0, 100)) : context.pairStats ?? [];
+  const pairs = request.conditions.pair ? aggregatePairStats(context.pastDraws.slice(0, request.conditions.pair.window ?? 100)) : context.pairStats ?? [];
   const pairWeights = request.conditions.pair ? pairWeightMap(pairs, request.conditions.pair.base, request.conditions.pair.topK) : new Map<number, number>();
   const prepared = {
     hotTop,
