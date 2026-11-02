@@ -1,60 +1,35 @@
-import { BallRow } from "@/components/lotto/BallRow";
 import Link from "next/link";
+import Image from "next/image";
+import { BallRow } from "@/components/lotto/BallRow";
 import { LottoBall } from "@/components/lotto/LottoBall";
-import { Badge } from "@/components/ui/Badge";
+import { SavedResultNotice } from "@/components/home/SavedResultNotice";
 import { lottoDraws } from "@/data/draws";
 import { aggregateNumberStats } from "@/lib/stats";
 import { formatKoreanDate, formatWon } from "@/lib/format";
-import { SavedResultNotice } from "@/components/home/SavedResultNotice";
+
+const ranges = [[1, 10], [11, 20], [21, 30], [31, 40], [41, 45]] as const;
 
 export default function Home() {
   const latest = lottoDraws[0];
   const stats = aggregateNumberStats(lottoDraws);
-  const hot = [...stats].sort((a, b) => b.countRecent10 - a.countRecent10).slice(0, 3);
-  const cold = [...stats].sort((a, b) => b.gap - a.gap).slice(0, 3);
-  return (
-    <div className="page home-page">
-      <section className="home-hero">
-        <div className="hero-copy">
-          <p className="eyebrow">{formatKoreanDate(latest.date)}</p>
-          <h1>제{latest.round}회<br />당첨번호가 나왔어요</h1>
-          <p className="body-color">번호를 확인하고 다음 주 조합도 가볍게 골라보세요.</p>
-        </div>
-        <div className="hero-result card">
-          <BallRow draw={latest} size="lg" />
-          <hr className="divider" />
-          <dl className="hero-kv">
-            <div><dt>1등 당첨자</dt><dd>{latest.firstWinners}명</dd></div>
-            <div><dt>1인당 당첨금</dt><dd>{formatWon(latest.firstWinAmount)}</dd></div>
-          </dl>
-          <Link className="text-link" href={`/results/${latest.round}`}>회차 자세히 보기 →</Link>
-        </div>
+  const hot = [...stats].sort((a, b) => b.countRecent10 - a.countRecent10 || a.number - b.number).slice(0, 5);
+  const recent = lottoDraws.slice(0, 10);
+  const distribution = ranges.map(([min, max]) => ({ label: `${min}–${max}`, count: recent.reduce((sum, draw) => sum + draw.numbers.filter((n) => n >= min && n <= max).length, 0) }));
+  const maxCount = Math.max(...distribution.map((item) => item.count));
+  return <div className="page dashboard-home">
+    <div className="dashboard-heading"><div><p className="dashboard-kicker">당첨번호부터 나만의 조합까지</p><h1>이번 주, 로또를 살펴볼까요?</h1><p>최신 결과와 흥미로운 숫자를 한눈에 확인해요.</p></div><Link className="dashboard-primary" href="/draw">번호 추첨하기 <span aria-hidden="true">↗</span></Link></div>
+    <div className="dashboard-overview">
+      <section className="dashboard-result" aria-labelledby="latest-title"><div className="dashboard-card-head"><div><span className="dashboard-pill"><span /> 최신 당첨 결과</span><h2 id="latest-title">제 {latest.round.toLocaleString("ko-KR")}회 당첨번호</h2><p>{formatKoreanDate(latest.date)} 추첨</p></div><Link href={`/results/${latest.round}`} className="dashboard-circle-link" aria-label={`${latest.round}회 당첨 결과 자세히 보기`}>↗</Link></div>
+        <div className="dashboard-winning"><BallRow draw={latest} size="lg" /></div>
+        <div className="dashboard-prize"><div><span>1등 당첨자</span><strong>{latest.firstWinners?.toLocaleString("ko-KR")}명</strong></div><div><span>1인당 당첨금</span><strong>{formatWon(latest.firstWinAmount)}</strong></div><Link href="/check">내 번호 확인 <span aria-hidden="true">↗</span></Link></div>
       </section>
-
-      <SavedResultNotice />
-
-      <section className="quick-grid section">
-        <Link href="/check" className="quick-card card card-weak">
-          <Badge tone="fill">빠른 확인</Badge>
-          <h3>내 번호는 몇 개 맞았을까요?</h3>
-          <p>번호 6개만 고르면 바로 등수를 확인해요.</p>
-          <span>내 번호 확인하기 →</span>
-        </Link>
-        <Link href="/draw" className="quick-card card">
-          <img className="quick-icon illustration-image" src="/icons/preset-random.png" alt="" aria-hidden="true" />
-          <h3>다음 회차 번호 뽑기</h3>
-          <p>조건 없이 시작하고, 원할 때만 조건을 더해요.</p>
-          <span>번호 골라보기 →</span>
-        </Link>
-      </section>
-
-      <section className="section">
-        <div className="section-head"><h2>이번 주 하이라이트</h2><Link className="text-link" href="/stats">전체 통계 →</Link></div>
-        <div className="highlight-grid">
-          <div className="card"><div className="highlight-title"><img className="highlight-illustration" src="/icons/preset-hot.png" alt="" aria-hidden="true" /><div><h3>최근 자주 나온 번호</h3><p className="body-small">최근 10회 출현 횟수</p></div></div><div className="highlight-numbers">{hot.map((stat) => <div key={stat.number}><LottoBall number={stat.number} /><strong>{stat.countRecent10}회</strong></div>)}</div></div>
-          <div className="card"><div className="highlight-title"><img className="highlight-illustration" src="/icons/preset-cold.png" alt="" aria-hidden="true" /><div><h3>오래 쉬고 있는 번호</h3><p className="body-small">최신 회차 기준</p></div></div><div className="highlight-numbers">{cold.map((stat) => <div key={stat.number}><LottoBall number={stat.number} /><strong>{stat.gap}회</strong></div>)}</div></div>
-        </div>
-      </section>
+      <aside className="dashboard-actions"><div className="dashboard-action-top"><span className="dashboard-action-icon" aria-hidden="true"><Image src="/icons/preset-random.png" alt="" width={32} height={32} /></span><span>나만의 번호</span></div><div><h2>어떤 번호를<br />골라볼까요?</h2><p>원하는 조건을 조합해<br />나만의 번호를 만들어 보세요.</p></div><Link href="/draw">번호 만들기 <span aria-hidden="true">↗</span></Link></aside>
     </div>
-  );
+    <SavedResultNotice />
+    <section className="dashboard-insights"><div className="dashboard-section-head"><div><h2>숫자로 보는 최근 회차</h2><p>최근 10회 당첨번호 기준이에요.</p></div><Link href="/stats">통계 자세히 보기 <span aria-hidden="true">↗</span></Link></div>
+      <div className="dashboard-insight-grid"><article className="dashboard-panel dashboard-distribution"><div className="dashboard-panel-head"><div><h3>번호 구간별 출현</h3><p>최근 10회 · 본번호 60개</p></div><span className="dashboard-tag">10회 기준</span></div><div className="dashboard-bars">{distribution.map((item) => <div className="dashboard-bar-row" key={item.label}><span>{item.label}</span><div className="dashboard-bar-track"><div style={{ width: `${item.count / maxCount * 100}%` }} /></div><strong>{item.count}<small>회</small></strong></div>)}</div><Link href="/draw/pattern-lab" className="dashboard-panel-link">구간 패턴 연구하기 <span aria-hidden="true">↗</span></Link></article>
+      <article className="dashboard-panel dashboard-hot"><div className="dashboard-panel-head"><div><h3>최근 자주 나온 번호</h3><p>최근 10회 출현 횟수</p></div><span className="dashboard-symbol" aria-hidden="true">✦</span></div><div className="dashboard-hot-list">{hot.map((item, i) => <div key={item.number}><span className="dashboard-rank">{i + 1}</span><LottoBall number={item.number} size="sm" /><span className="dashboard-hot-label">{item.number}번</span><strong>{item.countRecent10}회</strong></div>)}</div><Link href="/draw/hot" className="dashboard-panel-link">핫넘버로 추첨하기 <span aria-hidden="true">↗</span></Link></article></div>
+    </section>
+    <section className="dashboard-shortcuts" aria-label="주요 기능"><Link href="/results"><span className="shortcut-icon" aria-hidden="true"><Image src="/icons/footer-trophy.png" alt="" width={32} height={32} /></span><span><strong>지난 당첨번호</strong><small>회차별 결과를 살펴봐요</small></span><b aria-hidden="true">↗</b></Link><Link href="/archive"><span className="shortcut-icon" aria-hidden="true"><Image src="/icons/footer-ticket.png" alt="" width={32} height={32} /></span><span><strong>내 번호 보관함</strong><small>저장한 번호를 확인해요</small></span><b aria-hidden="true">↗</b></Link><Link href="/draw/pattern-lab"><span className="shortcut-icon" aria-hidden="true"><Image src="/icons/preset-next-pattern.png" alt="" width={32} height={32} /></span><span><strong>패턴 연구실</strong><small>숫자의 흐름을 실험해요</small></span><b aria-hidden="true">↗</b></Link></section>
+  </div>;
 }

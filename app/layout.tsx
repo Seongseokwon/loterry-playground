@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import "../styles/components.css";
 import "../styles/pages.css";
+import "../styles/dashboard.css";
 import { AppFooter, AppHeader } from "@/components/SiteChrome";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
