@@ -111,3 +111,58 @@ body { background: linear-gradient(160deg,#f3f7fd 0%,#e9f2ff 45%,#f5f8fc 100%); 
 }
 @media (max-width: 350px) { .mobile-nav { left:8px; right:8px; width:calc(100% - 16px); } .mobile-nav small { font-size:9px; } }
 @media (max-width: 380px) { .dashboard-winning .numbers { gap:4px; } .dashboard-winning .lotto-ball { width:clamp(28px,8vw,34px); height:clamp(28px,8vw,34px); font-size:14px; } .dashboard-winning .plus { margin:0; } }
+
+/* Fresh mint and clear blue keep the data readable while giving the space energy. */
+:root { --color-primary:#007878; --color-primary-hover:#006263; --color-canvas:#f8fcfb; --color-foreground:#17333c; --color-body:#405e65; --color-muted:#59747a; --color-border:#dceee9; --color-weak-bg:#e2f7ef; --color-weak-fg:#006d69; --ball-yellow:#ffcf50; --ball-blue:#82d5ed; --ball-red:#ca4857; --ball-gray:#657991; --ball-green:#b1df67; }
+html { background:#f8fcfb; }
+body { background:linear-gradient(145deg,#fbfefd 0%,#edf9f5 53%,#f2f8ff 100%); }
+.site-header { background:rgba(248,252,251,.9); }
+.brand { color:#17333c; }
+.brand-mark { background:linear-gradient(145deg,#17b9a0,#007878); box-shadow:0 5px 14px #16a88a35; }
+.desktop-nav { border-color:#dceee9; }
+.desktop-nav a { color:#405e65; }
+.desktop-nav a.nav-active { background:#def7ee; color:#006d69; }
+.desktop-nav a:hover { background:#eefaf6; }
+.card,.dashboard-result,.dashboard-panel,.dashboard-shortcuts > a,.result-row,.preset-card { border-color:#e0eee9; box-shadow:0 8px 28px #174e450a; }
+.card-weak { background:#e6f8f1; }
+.site-footer { border-color:#dceee9; }
+.product-primary { box-shadow:0 6px 16px #008f7930; }
+.dashboard-heading p:not(.dashboard-kicker),.dashboard-section-head p { color:#4e6b70; }
+.dashboard-kicker { color:#087e72; }
+.dashboard-primary { background:#007878; }
+.dashboard-primary:hover { background:#006263; }
+.dashboard-pill { background:#dff8ed; color:#006d5f; }
+.dashboard-pill span { background:#0a9a79; }
+.dashboard-card-head p,.dashboard-panel-head p,.dashboard-prize span { color:#5d777b; }
+.dashboard-circle-link { color:#087e72; border-color:#dceee9; }
+.dashboard-prize { border-color:#e6f1ed; }
+.dashboard-prize a { background:#e2f7ef; color:#006d69; }
+.dashboard-actions { background:linear-gradient(145deg,#007e70,#006573); box-shadow:0 12px 30px #00927830; }
+.dashboard-action-top { color:#e8fff7; }
+.dashboard-actions p { color:#e5fff5; }
+.dashboard-section-head > a,.dashboard-panel-link { color:#007477; }
+.dashboard-tag { background:#edf8f4; color:#456a64; }
+.dashboard-bar-row { color:#56726f; }
+.dashboard-bar-row strong,.dashboard-hot-list strong { color:#234b50; }
+.dashboard-bar-track { background:#e9f5f0; }
+.dashboard-bar-track > div { background:linear-gradient(90deg,#42d0aa,#009d98); }
+.dashboard-bar-row:nth-child(2) .dashboard-bar-track > div { background:linear-gradient(90deg,#68bafa,#3077d1); }
+.dashboard-bar-row:nth-child(3) .dashboard-bar-track > div { background:linear-gradient(90deg,#ffb192,#e57262); }
+.dashboard-bar-row:nth-child(4) .dashboard-bar-track > div { background:linear-gradient(90deg,#b7a9f2,#8273c5); }
+.dashboard-bar-row:nth-child(5) .dashboard-bar-track > div { background:linear-gradient(90deg,#f7cd68,#d69a29); }
+.dashboard-panel-link { border-color:#e6f1ed; }
+.dashboard-symbol { color:#007c75; background:#e4f8ef; }
+.dashboard-rank { color:#64827d; }
+.dashboard-hot-label { color:#48645f; }
+.shortcut-icon { background:#e4f8ef; color:#007c75; }
+.dashboard-shortcuts small { color:#59746f; }
+.dashboard-shortcuts b { color:#007c75; }
+.dashboard-shortcuts a:hover,.dashboard-circle-link:hover { border-color:#7fd5bd; }
+.pattern-lab label { color:#315650; }
+.pattern-lab select { background:#f7fdfa; border-color:#cde9df; }
+.pattern-lab summary { color:#007477; }
+.pattern-lab details li { color:#405e65; }
+.preset-card:hover,.preset-active { border-color:#19a58c; }
+.condition-chip { background:#edf8f4; }
+.condition-on { background:#dff7ee; }
+@media (max-width:767px) { .site-header { background:#f8fcfb; } .mobile-nav { border-color:#dceee9; box-shadow:0 10px 32px #1b66512b,0 2px 8px #1b665110; } .mobile-nav a { color:#56716c; } .mobile-nav a.nav-active { background:#def7ee; color:#006d69; } }
