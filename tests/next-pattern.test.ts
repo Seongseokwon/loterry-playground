@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { analyzeNextPatterns, drawPattern, formatPattern, MIN_NEXT_PATTERN_MATCHES, recommendedNextPattern } from "@/lib/next-pattern";
+import { analyzeNextPatterns, drawPattern, formatPattern, recommendedNextPattern } from "@/lib/next-pattern";
 import type { Draw } from "@/lib/types";
+import { lottoDraws } from "@/data/draws";
 
 const draw = (round: number, numbers: Draw["numbers"]): Draw => ({ round, date: "2026-01-01", numbers, bonus: 45 });
 
@@ -23,7 +24,21 @@ describe("next pattern analysis", () => {
     expect(analysis.matchingRounds).toBe(2);
     expect(analysis.candidates[0]).toMatchObject({ pattern: [1, 2, 1, 1, 1], transitionCount: 1 });
     expect(analysis.candidates[1]).toMatchObject({ pattern: [2, 1, 1, 1, 1], transitionCount: 1 });
-    expect(recommendedNextPattern(analysis)).toBeUndefined();
-    expect(MIN_NEXT_PATTERN_MATCHES).toBeGreaterThan(analysis.matchingRounds);
+    expect(recommendedNextPattern(analysis)).toEqual([1, 2, 1, 1, 1]);
+    expect(analysis.transitions.map(({ observed, next }) => [observed.round, next.round])).toEqual([[3, 4], [2, 3]]);
+  });
+
+  it("uses all history by default and allows a single match", () => {
+    const draws = [draw(4, [1, 2, 11, 21, 31, 41]), draw(3, [1, 11, 12, 21, 31, 41]), draw(2, [1, 2, 11, 21, 31, 41]), draw(1, [1, 11, 21, 31, 41, 42])];
+    expect(recommendedNextPattern(analyzeNextPatterns(draws))).toEqual([1, 2, 1, 1, 1]);
+    expect(recommendedNextPattern(analyzeNextPatterns(draws, 2))).toBeUndefined();
+  });
+
+  it("finds historical transitions for round 1248", () => {
+    const analysis = analyzeNextPatterns(lottoDraws.filter((item) => item.round <= 1248));
+    expect(analysis.currentPattern).toEqual([0, 2, 1, 2, 1]);
+    expect(analysis.matchingRounds).toBe(21);
+    expect(analysis.candidates[0]).toMatchObject({ pattern: [2, 1, 2, 1, 0], transitionCount: 3 });
+    expect(analyzeNextPatterns(lottoDraws.filter((item) => item.round <= 1248), 100).matchingRounds).toBe(1);
   });
 });

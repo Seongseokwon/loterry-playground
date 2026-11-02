@@ -1,6 +1,6 @@
 import { Badge } from "@/components/ui/Badge";
 import { lottoDraws } from "@/data/draws";
-import { analyzeNextPatterns, formatPattern, MIN_NEXT_PATTERN_MATCHES, NEXT_PATTERN_WINDOW, recommendedNextPattern } from "@/lib/next-pattern";
+import { analyzeNextPatterns, formatPattern, recommendedNextPattern } from "@/lib/next-pattern";
 
 export function NextPatternPreview() {
   const analysis = analyzeNextPatterns(lottoDraws);
@@ -18,7 +18,7 @@ export function NextPatternPreview() {
 
       <section className="section card next-pattern-preview">
         <img className="next-pattern-preview-icon" src="/icons/preset-next-pattern.png" alt="" aria-hidden="true" />
-        <Badge tone="weak">최근 {NEXT_PATTERN_WINDOW}회 분석</Badge>
+        <Badge tone="weak">전체 회차 분석</Badge>
         <h2>다음에 이어질 구간 패턴</h2>
         <p className="body-color">현재 패턴과 같았던 과거 회차 다음에 어떤 패턴이 나왔는지 살펴봐요.</p>
         <div className="next-pattern-current">
@@ -41,10 +41,10 @@ export function NextPatternPreview() {
         ) : (
           <div className="next-pattern-empty">
             <strong>{first ? "추천 패턴을 더 모으는 중이에요" : "아직 추천할 패턴이 없어요"}</strong>
-            <p className="body-small">현재 패턴과 일치한 회차가 {analysis.matchingRounds}회라 표본이 부족해요. {MIN_NEXT_PATTERN_MATCHES}회 이상 쌓이면 추천 패턴을 공개합니다.</p>
+            <p className="body-small">현재 패턴과 일치하는 과거 회차가 없어요.</p>
           </div>
         )}
-        <p className="body-small">추천 기준: 최근 {analysis.analyzedRounds}회 · 동일 패턴 {analysis.matchingRounds}회 · 바로 다음 회차 전이</p>
+        <p className="body-small">추천 기준: {analysis.analyzedRounds}회 분석 · 동일 패턴 {analysis.matchingRounds}회 · 바로 다음 회차 전이</p>
         <p className="body-small">추천 결과는 당첨을 예측하지 않으며, 과거 패턴을 살펴보는 참고용 기능이에요.</p>
       </section>
     </>

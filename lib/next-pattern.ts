@@ -1,7 +1,6 @@
 import type { Draw } from "@/lib/types";
 
-export const NEXT_PATTERN_WINDOW = 100;
-export const MIN_NEXT_PATTERN_MATCHES = 8;
+export const NEXT_PATTERN_WINDOW = Infinity;
 export const DEFAULT_NUMBER_RANGES = [
   [1, 10],
   [11, 20],
@@ -24,6 +23,7 @@ export interface NextPatternAnalysis {
   analyzedRounds: number;
   matchingRounds: number;
   candidates: NextPatternCandidate[];
+  transitions: { observed: Draw; next: Draw; pattern: Pattern }[];
 }
 
 export function drawPattern(draw: Draw): Pattern {
@@ -40,7 +40,6 @@ export function formatPattern(pattern: Pattern): string {
 }
 
 export function recommendedNextPattern(analysis: NextPatternAnalysis): Pattern | undefined {
-  if (analysis.matchingRounds < MIN_NEXT_PATTERN_MATCHES) return undefined;
   return analysis.candidates[0]?.pattern;
 }
 
@@ -50,15 +49,17 @@ export function analyzeNextPatterns(draws: Draw[], windowSize = NEXT_PATTERN_WIN
   const currentPattern = drawPattern(windowDraws[0]);
   const counts = new Map<string, NextPatternCandidate>();
   let matchingRounds = 0;
+  const transitions: NextPatternAnalysis["transitions"] = [];
 
   // Draws are newest-first, so the next draw for windowDraws[index] is index - 1.
   for (let index = 1; index < windowDraws.length; index += 1) {
     const observed = windowDraws[index];
     if (patternKey(drawPattern(observed)) !== patternKey(currentPattern)) continue;
-    matchingRounds += 1;
-
     const nextDraw = windowDraws[index - 1];
+    if (nextDraw.round !== observed.round + 1) continue;
+    matchingRounds += 1;
     const nextPattern = drawPattern(nextDraw);
+    transitions.push({ observed, next: nextDraw, pattern: nextPattern });
     const key = patternKey(nextPattern);
     const candidate = counts.get(key) ?? {
       pattern: nextPattern,
@@ -76,6 +77,7 @@ export function analyzeNextPatterns(draws: Draw[], windowSize = NEXT_PATTERN_WIN
     currentPattern,
     analyzedRounds: windowDraws.length,
     matchingRounds,
+    transitions,
     candidates: [...counts.values()].sort((a, b) =>
       b.transitionCount - a.transitionCount || b.latestTransitionRound - a.latestTransitionRound || patternKey(a.pattern).localeCompare(patternKey(b.pattern))),
   };

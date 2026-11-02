@@ -11,7 +11,7 @@ import { ResultSheet } from "@/components/lotto/ResultSheet";
 import { TextField } from "@/components/ui/TextField";
 import { lottoDraws, lottoPairStats } from "@/data/draws";
 import { aggregateNumberStats } from "@/lib/stats";
-import { analyzeNextPatterns, formatPattern, MIN_NEXT_PATTERN_MATCHES, recommendedNextPattern } from "@/lib/next-pattern";
+import { analyzeNextPatterns, formatPattern, patternKey } from "@/lib/next-pattern";
 import { saveSavedSet, type SavedSet, type SavedSetInput, type SavedSetNumbers } from "@/lib/storage";
 import type { DrawConditions, DrawRequest, DrawResult } from "@/lib/types";
 import { generationBucket, trackEvent } from "@/lib/analytics";
@@ -45,7 +45,7 @@ const presetCopy: Record<Preset, { title: string; copy: string }> = {
   carryover: { title: "지난 회차 번호 섞기", copy: "직전 회차 당첨번호 중 하나를 반드시 포함하고 나머지를 새로 골라요. 같은 숫자가 연속 회차에 나오는 현상을 재미있게 살펴보는 조건이에요." },
   pair: { title: "궁합수", copy: "과거 회차에서 함께 나온 횟수가 많은 번호를 참고해요. 기준 번호는 조합에 포함하고, 상위 K개 궁합수에 등장한 동반 번호에 가중치를 더해요." },
   birthday: { title: "기념일 번호", copy: "입력한 날짜의 일을 1~31 번호로 바꾸고, 부족한 자리는 1~31 안에서 랜덤으로 채워요. 날짜를 번호로 바꾸는 방식에는 분명한 편향이 있어요." },
-  "next-pattern": { title: "다음 패턴 추천", copy: "최근 100회에서 현재 패턴 다음에 가장 자주 이어진 1위 패턴으로 번호를 구성해요." },
+  "next-pattern": { title: "다음 패턴 추천", copy: "현재 패턴 다음에 이어진 과거 구간 패턴으로 번호를 구성해요." },
   "anti-crowd": { title: "반전 픽", copy: "생일 범위와 규칙적인 모양에만 몰리지 않도록 32~45 번호를 일부 포함하고 연속·끝수 반복이 심한 조합을 피해서 덜 뻔한 번호를 골라요. 당첨 확률을 높이는 방식은 아니에요." },
 };
 
@@ -93,10 +93,12 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
   const [manualSaveError, setManualSaveError] = useState("");
   const [limitNotice, setLimitNotice] = useState<SavedSet | null>(null);
   const [pendingSave, setPendingSave] = useState<SavedSetInput | null>(null);
+  const [patternWindow, setPatternWindow] = useState("all");
+  const [patternSelection, setPatternSelection] = useState("");
   const stats = useMemo(() => aggregateNumberStats(lottoDraws), []);
   const pairs = useMemo(() => preset === "pair" ? lottoPairStats : [], [preset]);
-  const nextPatternAnalysis = useMemo(() => preset === "next-pattern" ? analyzeNextPatterns(lottoDraws) : null, [preset]);
-  const selectedNextPattern = nextPatternAnalysis ? recommendedNextPattern(nextPatternAnalysis) : undefined;
+  const nextPatternAnalysis = useMemo(() => preset === "next-pattern" ? analyzeNextPatterns(lottoDraws, patternWindow === "all" ? Infinity : Number(patternWindow)) : null, [preset, patternWindow]);
+  const selectedNextPattern = nextPatternAnalysis?.candidates.find((candidate) => patternKey(candidate.pattern) === patternSelection)?.pattern ?? nextPatternAnalysis?.candidates[0]?.pattern;
   const recentFilterImpact = useMemo(() => {
     const recent = lottoDraws.slice(0, 100);
     const hasThreeConsecutive = (numbers: number[]) => numbers.some((number, index) => index <= numbers.length - 3 && numbers[index + 1] === number + 1 && numbers[index + 2] === number + 2);
@@ -345,14 +347,17 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
       {preset === "next-pattern" && nextPatternAnalysis && (
         <section className="section card next-pattern-builder">
           <div className="section-head">
-            <div><h3>1위 패턴으로 번호 뽑기</h3><p className="body-small">최근 100회 중 현재 패턴 다음에 가장 자주 이어진 패턴을 기준으로 구성해요.</p></div>
+            <div><h3>다음 패턴으로 번호 뽑기</h3><p className="body-small">현재 패턴과 같은 회차 다음에 나온 구간 분포를 살펴봐요.</p></div>
             <Badge tone="weak">{nextPatternAnalysis.matchingRounds}회 관찰</Badge>
           </div>
           <div className="next-pattern-builder-grid">
             <div><span className="body-small">현재 패턴</span><strong>{formatPattern(nextPatternAnalysis.currentPattern)}</strong></div>
-            <div className="next-pattern-builder-selected"><span className="body-small">사용할 1위 패턴</span><strong>{selectedNextPattern ? formatPattern(selectedNextPattern) : "표본 부족 · 일반 추첨"}</strong></div>
+            <div className="next-pattern-builder-selected"><span className="body-small">사용할 패턴</span><strong>{selectedNextPattern ? formatPattern(selectedNextPattern) : "일치 사례 없음 · 일반 추첨"}</strong></div>
           </div>
-          <p className="body-small">{selectedNextPattern ? "번호 뽑기 버튼을 누르면 위 구간 분포를 지키면서 번호를 만들어요." : `현재 일치 회차가 ${nextPatternAnalysis.matchingRounds}회라 ${MIN_NEXT_PATTERN_MATCHES}회 이상 쌓일 때까지 일반 추첨으로 전환해요.`} 과거 패턴은 당첨을 예측하지 않습니다.</p>
+          <p><label>분석 범위 <select value={patternWindow} onChange={(event) => { setPatternWindow(event.target.value); setPatternSelection(""); }}><option value="all">전체 회차</option><option value="300">최근 300회</option><option value="100">최근 100회</option></select></label></p>
+          {selectedNextPattern && <p><label>추첨 패턴 <select value={patternKey(selectedNextPattern)} onChange={(event) => setPatternSelection(event.target.value)}>{nextPatternAnalysis.candidates.map((candidate, index) => <option key={patternKey(candidate.pattern)} value={patternKey(candidate.pattern)}>{index + 1}위 · {formatPattern(candidate.pattern)} · {candidate.transitionCount}회</option>)}</select></label></p>}
+          <p className="body-small">구간 순서: 1~10 · 11~20 · 21~30 · 31~40 · 41~45. {selectedNextPattern ? "선택한 구간 분포에 맞춰 번호를 만들어요." : "일치 사례가 없어 일반 추첨으로 진행해요."} 과거 패턴은 당첨을 예측하지 않습니다.</p>
+          <details><summary>일치 회차와 다음 회차 상세 보기 ({nextPatternAnalysis.matchingRounds}건)</summary><ul>{nextPatternAnalysis.transitions.map(({ observed, next, pattern }) => <li key={observed.round}>{observed.round}회 → {next.round}회: {next.numbers.join(", ")} · {formatPattern(pattern)}</li>)}</ul></details>
         </section>
       )}
 
