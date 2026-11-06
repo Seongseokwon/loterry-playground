@@ -37,6 +37,6 @@ export function ModelPicks() {
       <div className="model-reason"><h3>이렇게 골랐어요</h3><p>{pick.explanation}</p></div>
       <ProductButton size="medium" tone="weak" disabled={saved.includes(pick.id) || Boolean(saving)} loading={saving === pick.id} onClick={() => void save(pick)}>{saved.includes(pick.id) ? "보관함에 저장했어요" : "이 조합 저장"}</ProductButton>
     </article>)}</section>}
-    <section className="model-more"><div><h2>직접 조건을 조합해보고 싶다면?</h2><p>패턴 연구실에서 분석 기간과 조건을 바꾸고 과거 기록도 살펴볼 수 있어요.</p></div><Link href="/draw/pattern-lab">패턴 연구실 가기 →</Link></section>
+    <section className="model-more"><div><h2>직접 조건을 조합해보고 싶다면?</h2><p>패턴 연구실에서 분석 기간과 조건을 바꾸고 과거 기록도 살펴볼 수 있어요.</p></div><Link className="product-button product-large product-weak" href="/draw/pattern-lab">패턴 연구실 가기 <span aria-hidden="true"> →</span></Link></section>
   </div>;
 }

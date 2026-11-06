@@ -8,8 +8,8 @@ export default function DrawPage() {
   return (
     <div className="page page-narrow">
       <DrawBuilder />
-      <section className="section card card-weak strategy-battle-link"><div><h2>번호 탐험대</h2><p className="body-small">네 가지 모델이 고른 번호와 그 이유를 한눈에 비교해 보세요.</p></div><Link className="product-button product-weak" href="/draw/model-picks">탐험대 만나기</Link></section>
-      <section className="section card card-weak strategy-battle-link"><div><h2>패턴 연구실</h2><p className="body-small">구간 패턴과 핫·콜드·궁합수를 비교하고 과거 회차로 실험해 보세요.</p></div><Link className="product-button product-weak" href="/draw/pattern-lab">연구실 열기</Link></section>
+      <section className="section card card-weak strategy-battle-link"><div><h2>번호 탐험대</h2><p className="body-small">네 가지 모델이 고른 번호와 그 이유를 한눈에 비교해 보세요.</p></div><Link className="product-button product-large product-weak" href="/draw/model-picks">탐험대 만나기</Link></section>
+      <section className="section card card-weak strategy-battle-link"><div><h2>패턴 연구실</h2><p className="body-small">구간 패턴과 핫·콜드·궁합수를 비교하고 과거 회차로 실험해 보세요.</p></div><Link className="product-button product-large product-weak" href="/draw/pattern-lab">연구실 열기</Link></section>
       <section className="section content-guide">
         <h2>로또 번호 추첨 이용 안내</h2>
         <p>완전 랜덤부터 핫넘버·미출현 번호·고정 번호·다음 패턴·반전 픽까지 원하는 조건을 조합해 번호를 만들어 볼 수 있습니다. 통계 조건은 번호 선택을 돕는 참고 기능이며 실제 당첨을 예측하거나 보장하지 않습니다.</p>
@@ -29,7 +29,7 @@ export default function DrawPage() {
           <h2>어떤 방식이 맞을지 고민된다면?</h2>
           <p className="body-small">랜덤·핫넘버·미출현·반전 픽을 한 번에 비교하고 마음에 드는 조합을 골라 보세요.</p>
         </div>
-        <Link className="product-button product-weak" href="/draw/strategy-battle">전략 대결 시작</Link>
+        <Link className="product-button product-large product-weak" href="/draw/strategy-battle">전략 대결 시작</Link>
       </section>
     </div>
   );

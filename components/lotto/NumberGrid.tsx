@@ -15,13 +15,15 @@ export function NumberGrid({ selected = [], fixed = [], excluded = [], disabled 
   const refs = useRef<Array<HTMLButtonElement | null>>([]);
   const stateFor = (number: number): NumberState => disabled.includes(number) ? "disabled" : fixed.includes(number) ? "fixed" : excluded.includes(number) ? "excluded" : selected.includes(number) ? "selected" : "default";
   const moveFocus = (index: number, key: string) => {
-    const row = Math.floor(index / 9);
-    const col = index % 9;
+    const columns = window.matchMedia("(max-width: 767px)").matches ? 5 : 9;
+    const rows = 45 / columns;
+    const row = Math.floor(index / columns);
+    const col = index % columns;
     let next = index;
-    if (key === "ArrowRight") next = row * 9 + ((col + 1) % 9);
-    if (key === "ArrowLeft") next = row * 9 + ((col + 8) % 9);
-    if (key === "ArrowDown") next = ((row + 1) % 5) * 9 + col;
-    if (key === "ArrowUp") next = ((row + 4) % 5) * 9 + col;
+    if (key === "ArrowRight") next = row * columns + ((col + 1) % columns);
+    if (key === "ArrowLeft") next = row * columns + ((col + columns - 1) % columns);
+    if (key === "ArrowDown") next = ((row + 1) % rows) * columns + col;
+    if (key === "ArrowUp") next = ((row + rows - 1) % rows) * columns + col;
     const direction = key === "ArrowLeft" || key === "ArrowUp" ? -1 : 1;
     let attempts = 0;
     while (refs.current[next]?.disabled && attempts < 45) { next = (next + direction + 45) % 45; attempts += 1; }
