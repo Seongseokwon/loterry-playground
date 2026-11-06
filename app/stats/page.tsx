@@ -3,7 +3,7 @@ import { StatsPanel } from "@/components/stats/StatsPanel";
 import { getDraws } from "@/lib/repositories/draws";
 import { pairStats } from "@/lib/stats";
 
-export const metadata: Metadata = { title: "번호 통계", description: "회차를 골라 번호별 출현 빈도, 홀짝·고저·합계 분포와 1등 당첨금 추이를 확인하세요." };
+export const metadata: Metadata = { alternates: { canonical: "/stats" }, title: "번호 통계", description: "회차를 골라 번호별 출현 빈도, 홀짝·고저·합계 분포와 1등 당첨금 추이를 확인하세요." };
 export default async function StatsPage() {
   const draws = await getDraws();
   const latestDraw = draws[0];

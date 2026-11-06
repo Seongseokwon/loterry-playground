@@ -14,9 +14,9 @@ export const metadata: Metadata = {
   metadataBase: new URL(siteOrigin),
   title: { default: "로또 플레이그라운드", template: "%s | 로또 플레이그라운드" },
   description,
-  icons: { icon: "/favicon.svg", shortcut: "/favicon.svg" },
-  openGraph: { title: "로또 플레이그라운드", description, type: "website", images: [{ url: "/og.png", width: 1672, height: 941, alt: "로또 플레이그라운드와 최신 당첨번호" }] },
-  twitter: { card: "summary_large_image", title: "로또 플레이그라운드", description, images: ["/og.png"] },
+  icons: { icon: "/lotto-logo.png", shortcut: "/lotto-logo.png" },
+  openGraph: { title: "로또 플레이그라운드", description, type: "website", images: [{ url: "/og.jpg", width: 1200, height: 630, alt: "로또 플레이그라운드와 최신 당첨번호" }] },
+  twitter: { card: "summary_large_image", title: "로또 플레이그라운드", description, images: ["/og.jpg"] },
 };
 
 export default function RootLayout({

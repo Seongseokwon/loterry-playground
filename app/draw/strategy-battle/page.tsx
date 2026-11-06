@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { StrategyBattle } from "@/components/draw/StrategyBattle";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/draw/strategy-battle" },
   title: "전략 대결 번호 추첨",
   description: "완전 랜덤, 핫넘버, 미출현, 반전 픽 번호 조합을 한 번에 비교해 보세요.",
 };

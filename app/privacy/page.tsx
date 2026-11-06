@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/privacy" },
   title: "개인정보 안내",
   description: "로또 플레이그라운드의 브라우저 저장, 분석 이벤트, 개인정보 처리 원칙을 안내합니다.",
 };

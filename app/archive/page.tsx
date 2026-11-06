@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { ArchivePanel } from "@/components/archive/ArchivePanel";
 
-export const metadata: Metadata = { title: "보관함", description: "선택하거나 뽑아 둔 로또 번호를 저장하고, 내 번호의 빈도와 조합을 분석하세요." };
+export const metadata: Metadata = { alternates: { canonical: "/archive" }, title: "보관함", description: "선택하거나 뽑아 둔 로또 번호를 저장하고, 내 번호의 빈도와 조합을 분석하세요." };
 
 export default function ArchivePage() {
   return (

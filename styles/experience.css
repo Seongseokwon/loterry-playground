@@ -120,7 +120,7 @@ a, button, input, select { transition:background-color .18s ease, border-color .
 @media(max-width:767px) { .results-search { padding:16px; } .page-header p.body-color { margin-top:8px; line-height:1.7; } .check-layout .row .product-button { flex:1 1 140px; min-height:48px; } }
 /* Mobile: keep the main tasks readable and reachable on narrow screens. */
 @media (max-width: 767px) {
-  .mobile-nav { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+  .mobile-nav { grid-template-columns: repeat(6, minmax(0, 1fr)); }
   .dashboard-overview { grid-template-columns: minmax(0, 1fr); }
   .dashboard-overview > * { min-width: 0; }
   .dashboard-winning .numbers, .result-row .numbers { display:flex; flex-wrap:nowrap; gap:4px; min-width:0; width:100%; }
@@ -148,4 +148,18 @@ a, button, input, select { transition:background-color .18s ease, border-color .
 @media (max-width: 767px) {
   .strategy-battle-link .product-button, .model-more .product-button { width:100%; }
   .pattern-lab-controls .product-button { flex:1 1 150px; }
+}
+
+@media (max-width: 767px) { .mobile-nav { left:8px; right:8px; width:calc(100% - 16px); padding:4px; } .mobile-nav a { min-height:50px; } .mobile-nav small { font-size:10px; } }
+
+.result-save-jump { align-self:flex-start; }
+#archive-save { scroll-margin-block:16px; }
+@media (max-width:767px) { .result-save-jump { width:100%; } }
+
+.brand-mark { width:40px; height:40px; background:transparent; box-shadow:none; }
+.brand-mark img { display:block; width:100%; height:100%; object-fit:contain; }
+@media (max-width:767px) { .brand-mark { width:36px; height:36px; } }
+@media (max-width: 767px) {
+  .model-numbers { flex-wrap:nowrap; gap:5px; }
+  .model-numbers .lotto-ball { width:min(32px, calc((100% - 25px) / 6)); height:auto; aspect-ratio:1; }
 }

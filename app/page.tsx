@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Image from "next/image";
 import { BallRow } from "@/components/lotto/BallRow";
@@ -6,6 +7,10 @@ import { SavedResultNotice } from "@/components/home/SavedResultNotice";
 import { lottoDraws } from "@/data/draws";
 import { aggregateNumberStats } from "@/lib/stats";
 import { formatKoreanDate, formatWon } from "@/lib/format";
+
+export const metadata: Metadata = { alternates: { canonical: "/" } };
+const siteOrigin = process.env.NEXT_PUBLIC_SITE_URL ?? "https://lotto-play-ground.vercel.app";
+const websiteData = { "@context": "https://schema.org", "@type": "WebSite", name: "로또 플레이그라운드", url: siteOrigin };
 
 const ranges = [[1, 10], [11, 20], [21, 30], [31, 40], [41, 45]] as const;
 
@@ -17,6 +22,7 @@ export default function Home() {
   const distribution = ranges.map(([min, max]) => ({ label: `${min}–${max}`, count: recent.reduce((sum, draw) => sum + draw.numbers.filter((n) => n >= min && n <= max).length, 0) }));
   const maxCount = Math.max(...distribution.map((item) => item.count));
   return <div className="page dashboard-home">
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteData).replace(/</g, "\\u003c") }} />
     <div className="dashboard-heading"><div><p className="dashboard-kicker">당첨번호부터 나만의 조합까지</p><h1>이번 주, 로또를 살펴볼까요?</h1><p>최신 결과와 흥미로운 숫자를 한눈에 확인해요.</p></div><Link className="dashboard-primary" href="/draw">번호 추첨하기 <span aria-hidden="true">↗</span></Link></div>
     <div className="dashboard-overview">
       <section className="dashboard-result" aria-labelledby="latest-title"><div className="dashboard-card-head"><div><span className="dashboard-pill"><span /> 최신 당첨 결과</span><h2 id="latest-title">제 {latest.round.toLocaleString("ko-KR")}회 당첨번호</h2><p>{formatKoreanDate(latest.date)} 추첨</p></div><Link href={`/results/${latest.round}`} className="dashboard-circle-link" aria-label={`${latest.round}회 당첨 결과 자세히 보기`}>↗</Link></div>

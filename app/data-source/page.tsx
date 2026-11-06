@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/data-source" },
   title: "데이터 출처",
   description: "로또 플레이그라운드가 당첨번호와 통계 데이터를 수집하고 검증하는 방법을 안내합니다.",
 };

@@ -9,7 +9,7 @@ const navItems = [
   { href: "/draw", icon: "dice", label: "추첨" },
   { href: "/stats", icon: "chart", label: "통계" },
   { href: "/check", icon: "ticket", label: "내 번호" },
-  { href: "/archive", icon: "ticket", label: "보관함" },
+  { href: "/archive", icon: "archive", label: "보관함" },
 ];
 
 export function AppHeader() {
@@ -22,7 +22,7 @@ export function AppHeader() {
     <header className="site-header">
       <div className="site-header-inner">
         <Link className="brand" href="/" aria-label="로또 플레이그라운드 홈">
-          <span className="brand-mark" aria-hidden="true">6</span>
+          <span className="brand-mark" aria-hidden="true"><img src="/lotto-logo.png" alt="" width={40} height={40} /></span>
           <span>로또 플레이그라운드</span>
         </Link>
         <nav className="desktop-nav" aria-label="주요 메뉴">
@@ -39,14 +39,14 @@ export function AppHeader() {
         </nav>
       </div>
       <nav className="mobile-nav" aria-label="모바일 주요 메뉴">
-        {navItems.filter((item) => item.href !== "/archive").map((item) => (
+        {navItems.map((item) => (
           <Link
             key={item.href}
             href={item.href}
             className={isActive(item.href) ? "nav-active" : undefined}
             aria-current={isActive(item.href) ? "page" : undefined}
           >
-            <img className="mobile-nav-icon" src={`/icons/footer-${item.icon}.png`} alt="" aria-hidden="true" />
+            {item.icon === "archive" ? <svg className="mobile-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16v13H4z" /><path d="M3 4h18v3H3zM9 11h6" /></svg> : <img className="mobile-nav-icon" src={`/icons/footer-${item.icon}.png`} alt="" aria-hidden="true" />}
             <small>{item.label}</small>
           </Link>
         ))}
@@ -66,6 +66,7 @@ export function AppFooter() {
           <Link href="/about">서비스 소개</Link>
           <Link href="/data-source">데이터 출처</Link>
           <Link href="/privacy">개인정보 안내</Link>
+          <Link href="/terms">이용 안내</Link>
           <Link href="/contact">문의</Link>
         </nav>
         <p>본 사이트는 동행복권 및 기획재정부와 무관한 비공식 정보 서비스입니다.</p>

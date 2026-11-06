@@ -12,12 +12,12 @@ export default async function OpenGraphImage({ params }: { params: Promise<{ rou
   const numbers = draw ? `${draw.numbers.join("  ·  ")}  +  ${draw.bonus}` : "당첨번호와 통계를 한눈에";
 
   return new ImageResponse(
-    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "72px", background: "#f7f7f4", color: "#18221d" }}>
-      <div style={{ display: "flex", fontSize: 28, color: "#5f6c64", marginBottom: 24 }}>LOTTO PLAYGROUND</div>
+    <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "center", padding: "72px", background: "#f7f6f1", color: "#172941" }}>
+      <div style={{ display: "flex", fontSize: 28, color: "#536579", marginBottom: 24 }}>LOTTO PLAYGROUND</div>
       <div style={{ display: "flex", fontSize: 64, fontWeight: 700, letterSpacing: -2, marginBottom: 36 }}>{title}</div>
-      <div style={{ display: "flex", fontSize: 42, fontWeight: 700, color: "#176b4d" }}>{numbers}</div>
-      {draw && <div style={{ display: "flex", fontSize: 25, color: "#5f6c64", marginTop: 28 }}>{draw.date} · 보너스 번호는 마지막 숫자</div>}
-      <div style={{ display: "flex", position: "absolute", right: 72, bottom: 48, fontSize: 22, color: "#5f6c64" }}>lotto-play-ground</div>
+      <div style={{ display: "flex", fontSize: 42, fontWeight: 700, color: "#315caa" }}>{numbers}</div>
+      {draw && <div style={{ display: "flex", fontSize: 25, color: "#536579", marginTop: 28 }}>{draw.date} · 보너스 번호는 마지막 숫자</div>}
+      <div style={{ display: "flex", position: "absolute", right: 72, bottom: 48, fontSize: 22, color: "#536579" }}>lotto-play-ground</div>
     </div>,
     { ...size },
   );

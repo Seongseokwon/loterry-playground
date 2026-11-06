@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/contact" },
   title: "문의",
   description: "로또 플레이그라운드 오류 신고와 개선 의견 안내입니다.",
 };

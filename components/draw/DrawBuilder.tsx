@@ -559,18 +559,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
           <div className="stack" aria-live="polite">
             <div className="chip-wrap">{result.appliedChips.map((chip) => <Badge key={chip}>{chip}</Badge>)}</div>
             {result.relaxed?.map((item) => <p className="body-small" key={item}>{item}</p>)}
-            <div className="generation-summary card card-weak">
-              <strong>{result.wheel ? `${result.wheel.candidateCount}개 후보를 ${result.wheel.actualGames}게임으로 분산했어요` : generationMode === "custom" ? `${((result.successfulIterations ?? 0) + (result.failedIterations ?? 0)).toLocaleString("ko-KR")}번째 조합까지 계산했어요` : "반복 추첨을 완료했어요"}</strong>
-              {result.wheel && <p className="body-small">각 후보 번호가 최소 한 번 이상 포함되도록 조합을 나눴어요. 후보 수에 따라 요청한 게임 수보다 더 만들 수 있어요.</p>}
-              <div className="generation-summary-grid">
-                <span>성공 <b>{(result.successfulIterations ?? result.games.length).toLocaleString("ko-KR")}회</b></span>
-                <span>조건 충돌 <b>{(result.failedIterations ?? 0).toLocaleString("ko-KR")}회</b></span>
-                <span>내부 시도 <b>{result.attempts.toLocaleString("ko-KR")}회</b></span>
-              </div>
-              {frequentNumbers.length > 0 && <div className="frequency-actions"><p className="body-small">반복 결과에서 자주 포함된 번호: {frequentNumbers.map(([number, count]) => `${number}번(${count}회)`).join(" · ")}</p><ProductButton size="small" tone="weak" onClick={addFrequentNumbers}>선택 번호에 추가</ProductButton></div>}
-              {generationMode === "custom" && <p className="body-small">아래에는 마지막 조합 하나만 보여드려요.</p>}
-              {frequentNumbers.length > 0 && fixed.length < 7 && <p className="body-small">현재 선택 번호가 6개 이하라 추가한 번호는 반드시 포함돼요. 후보 풀로 쓰려면 7개 이상 선택하세요.</p>}
-            </div>
+            <a className="product-button product-large product-weak result-save-jump" href="#archive-save">보관함에 저장하기 ↓</a>
             <div className="result-games card">
               {result.games.map((game, gameIndex) => (
                 <div className="result-game" key={game.join("-")}>
@@ -579,8 +568,7 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
                 </div>
               ))}
             </div>
-            <div className="sheet-actions"><ProductButton tone="weak" onClick={runDraw}>다시 뽑기</ProductButton></div>
-            <section className="archive-save card">
+            <section id="archive-save" className="archive-save card" tabIndex={-1}>
               <div><h4>보관함에 저장</h4><p className="body-small">번호와 조건을 이 브라우저에만 저장해요.</p></div>
               {result.games.length > 1 && <label className="archive-select">저장할 게임
                 <select value={saveGameIndex} onChange={(event) => setSaveGameIndex(Number(event.currentTarget.value))}>
@@ -594,6 +582,19 @@ export function DrawBuilder({ preset = "random" }: { preset?: Preset }) {
               {saveError && <p className="archive-error" role="alert">{saveError}</p>}
               <ProductButton loading={saving} disabled={saved} onClick={() => void handleSave()}>{saved ? "저장했어요" : "보관함에 저장"}</ProductButton>
             </section>
+            <div className="sheet-actions"><ProductButton tone="weak" onClick={runDraw}>다시 뽑기</ProductButton></div>
+            <div className="generation-summary card card-weak">
+              <strong>{result.wheel ? `${result.wheel.candidateCount}개 후보를 ${result.wheel.actualGames}게임으로 분산했어요` : generationMode === "custom" ? `${((result.successfulIterations ?? 0) + (result.failedIterations ?? 0)).toLocaleString("ko-KR")}번째 조합까지 계산했어요` : "반복 추첨을 완료했어요"}</strong>
+              {result.wheel && <p className="body-small">각 후보 번호가 최소 한 번 이상 포함되도록 조합을 나눴어요. 후보 수에 따라 요청한 게임 수보다 더 만들 수 있어요.</p>}
+              <div className="generation-summary-grid">
+                <span>성공 <b>{(result.successfulIterations ?? result.games.length).toLocaleString("ko-KR")}회</b></span>
+                <span>조건 충돌 <b>{(result.failedIterations ?? 0).toLocaleString("ko-KR")}회</b></span>
+                <span>내부 시도 <b>{result.attempts.toLocaleString("ko-KR")}회</b></span>
+              </div>
+              {frequentNumbers.length > 0 && <div className="frequency-actions"><p className="body-small">반복 결과에서 자주 포함된 번호: {frequentNumbers.map(([number, count]) => `${number}번(${count}회)`).join(" · ")}</p><ProductButton size="small" tone="weak" onClick={addFrequentNumbers}>선택 번호에 추가</ProductButton></div>}
+              {generationMode === "custom" && <p className="body-small">아래에는 마지막 조합 하나만 보여드려요.</p>}
+              {frequentNumbers.length > 0 && fixed.length < 7 && <p className="body-small">현재 선택 번호가 6개 이하라 추가한 번호는 반드시 포함돼요. 후보 풀로 쓰려면 7개 이상 선택하세요.</p>}
+            </div>
             <p className="body-small center">모든 추첨 방식은 재미를 위한 것이며 당첨 확률에 영향을 주지 않습니다.</p>
           </div>
         )}

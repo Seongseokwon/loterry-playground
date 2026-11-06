@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { ResultsList } from "@/components/lotto/ResultsList";
 import { getDraws } from "@/lib/repositories/draws";
 
-export const metadata: Metadata = { title: "당첨번호", description: "제1회부터 최신 회차까지 실제 로또 당첨번호를 확인하세요." };
+export const metadata: Metadata = { alternates: { canonical: "/results" }, title: "당첨번호", description: "제1회부터 최신 회차까지 실제 로또 당첨번호를 확인하세요." };
 
 export default async function ResultsPage() {
   const draws = await getDraws();

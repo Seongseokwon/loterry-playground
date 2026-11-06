@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
+export const metadata: Metadata = { alternates: { canonical: "/about" },
   title: "서비스 소개",
   description: "로또 플레이그라운드가 제공하는 번호 확인, 추첨, 통계 기능과 운영 원칙을 안내합니다.",
 };
