@@ -22,10 +22,13 @@ export function NumberGrid({ selected = [], fixed = [], excluded = [], disabled 
     if (key === "ArrowLeft") next = row * 9 + ((col + 8) % 9);
     if (key === "ArrowDown") next = ((row + 1) % 5) * 9 + col;
     if (key === "ArrowUp") next = ((row + 4) % 5) * 9 + col;
+    const direction = key === "ArrowLeft" || key === "ArrowUp" ? -1 : 1;
+    let attempts = 0;
+    while (refs.current[next]?.disabled && attempts < 45) { next = (next + direction + 45) % 45; attempts += 1; }
     refs.current[next]?.focus();
   };
   return (
-    <div className="number-grid" role="grid" aria-label="1부터 45까지 번호 선택">
+    <div className="number-grid" role="group" aria-label="1부터 45까지 번호 선택">
       {Array.from({ length: 45 }, (_, index) => index + 1).map((number, index) => {
         const state = stateFor(number);
         const isSelected = state === "selected" || state === "fixed";
@@ -35,15 +38,13 @@ export function NumberGrid({ selected = [], fixed = [], excluded = [], disabled 
             key={number}
             ref={(node) => { refs.current[index] = node; }}
             type="button"
-            role="gridcell"
             className={`number-cell number-${state}`}
-            aria-selected={isSelected}
+            aria-pressed={isSelected}
             aria-label={`${number}번, ${state === "fixed" ? "고정" : state === "excluded" ? "제외" : isSelected ? "선택됨" : "선택 안 됨"}`}
             disabled={state === "disabled" || atLimit}
             onClick={() => onToggle(number)}
             onKeyDown={(event) => {
               if (["ArrowRight", "ArrowLeft", "ArrowDown", "ArrowUp"].includes(event.key)) { event.preventDefault(); moveFocus(index, event.key); }
-              if (event.key === " ") { event.preventDefault(); onToggle(number); }
             }}
           >
             {number}

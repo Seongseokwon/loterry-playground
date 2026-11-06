@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import Link from "next/link";
 import { LottoBall } from "@/components/lotto/LottoBall";
 import { SavedStatsPanel } from "@/components/archive/SavedStatsPanel";
 import { Badge } from "@/components/ui/Badge";
@@ -121,6 +122,7 @@ export function ArchivePanel() {
           <img className="archive-empty-icon" src="/icons/footer-ticket.png" alt="" aria-hidden="true" />
           <h2>아직 저장한 번호가 없어요</h2>
           <p className="body-color">번호를 뽑은 뒤 보관함에 저장해 보세요.</p>
+          <Link href="/draw" className="product-button product-large product-primary archive-empty-link">번호 만들러 가기</Link>
         </section>
       ) : (
         <div className="archive-list">

@@ -12,12 +12,16 @@ const PAGE_SIZE = 25;
 
 export function ResultsList({ draws }: { draws: Draw[] }) {
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
-  const visibleDraws = draws.slice(0, visibleCount);
-  const hasMore = visibleCount < draws.length;
-  const remainingCount = draws.length - visibleCount;
+  const [query, setQuery] = useState("");
+  const filtered = query ? draws.filter((draw) => String(draw.round).includes(query)) : draws;
+  const visibleDraws = filtered.slice(0, visibleCount);
+  const hasMore = visibleCount < filtered.length;
+  const remainingCount = filtered.length - visibleCount;
 
   return (
     <>
+      <div className="results-search"><label htmlFor="round-search">회차 검색</label><input id="round-search" type="search" inputMode="numeric" placeholder="예: 1248" value={query} onChange={(event) => { setQuery(event.target.value.replace(/\D/g, "")); setVisibleCount(PAGE_SIZE); }} /><p className="body-small" role="status">{query ? `검색 결과 ${filtered.length.toLocaleString("ko-KR")}회` : "찾고 싶은 회차 번호를 입력해 주세요."}</p></div>
+      {filtered.length === 0 && <div className="card results-empty"><p>해당 회차를 찾지 못했어요. 다른 번호로 검색해 보세요.</p></div>}
       <div className="result-list">
         {visibleDraws.map((draw, index) => (
           <Link className="result-row" href={`/results/${draw.round}`} key={draw.round}>
@@ -33,12 +37,12 @@ export function ResultsList({ draws }: { draws: Draw[] }) {
             size="large"
             tone="weak"
             type="button"
-            onClick={() => setVisibleCount((count) => Math.min(count + PAGE_SIZE, draws.length))}
+            onClick={() => setVisibleCount((count) => Math.min(count + PAGE_SIZE, filtered.length))}
             aria-label={`당첨번호 ${Math.min(PAGE_SIZE, remainingCount)}개 더보기`}
           >
             더보기
           </ProductButton>
-          <span className="body-small">전체 {draws.length.toLocaleString("ko-KR")}회 중 {visibleCount.toLocaleString("ko-KR")}회 표시</span>
+          <span className="body-small">전체 {filtered.length.toLocaleString("ko-KR")}회 중 {visibleCount.toLocaleString("ko-KR")}회 표시</span>
         </div>
       )}
     </>

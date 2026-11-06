@@ -9,7 +9,7 @@ export default function ArchivePage() {
       <header className="page-header">
         <p className="eyebrow">내 번호 보관함</p>
         <h1>저장한 번호</h1>
-        <p className="body-color">브라우저에만 안전하게 저장하고, 내 번호의 빈도 분석과 조합 생성에도 활용해 보세요.</p>
+        <p className="body-color">이 브라우저에 저장한 번호를 확인하고 빈도 분석과 조합 생성에 활용해 보세요.</p>
       </header>
       <ArchivePanel />
     </div>

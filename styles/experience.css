@@ -107,3 +107,14 @@ a, button, input, select { transition:background-color .18s ease, border-color .
 .model-more p { color:#536579; font-size:14px; margin-top:5px; }
 .model-more a { color:#315caa; font-weight:700; white-space:nowrap; padding:12px 0; }
 @media(max-width:767px) { .model-intro { align-items:stretch; flex-direction:column; padding:24px; } .model-intro h2 { font-size:24px; } .model-grid { grid-template-columns:1fr; } .model-card { padding:22px; } .model-more { align-items:flex-start; flex-direction:column; gap:8px; padding:22px; } }
+/* Search, empty states and small-screen interaction improvements. */
+.results-search { display:grid; gap:8px; margin-bottom:20px; padding:20px; background:#fff; border:1px solid var(--color-border); border-radius:18px; }
+.results-search label { font-size:15px; font-weight:700; }
+.results-search input { width:100%; min-height:48px; padding:10px 14px; color:var(--color-foreground); background:#f8fafb; border:1px solid #cbd6de; border-radius:12px; }
+.results-search input:focus { background:#fff; border-color:var(--color-primary); }
+.results-empty { margin-bottom:16px; color:var(--color-body); }
+.archive-empty-link { display:inline-flex; align-items:center; justify-content:center; min-height:48px; margin-top:16px; padding:12px 18px; }
+.result-row { transition:border-color .18s ease, box-shadow .18s ease; }
+.result-row:hover { border-color:#9bb4d6; box-shadow:0 8px 24px #315caa12; }
+.number-cell { touch-action:manipulation; }
+@media(max-width:767px) { .results-search { padding:16px; } .page-header p.body-color { margin-top:8px; line-height:1.7; } .check-layout .row .product-button { flex:1 1 140px; min-height:48px; } }
