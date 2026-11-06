@@ -10,6 +10,7 @@ type DetectorWindow = Window & { BarcodeDetector?: new () => Detector };
 export interface TicketScanResult {
   numbers: number[];
   round?: number;
+  games?: number[][];
 }
 
 function normalizeNumbers(values: unknown): number[] | null {
@@ -29,14 +30,35 @@ function parseRound(value: unknown) {
   return Number.isInteger(round) && round > 0 ? round : undefined;
 }
 
+function parseOfficialTicketUrl(raw: string): TicketScanResult | null {
+  try {
+    const url = new URL(raw);
+    if (url.hostname !== "qr.dhlottery.co.kr") return null;
+    const value = url.searchParams.get("v") ?? "";
+    const match = value.match(/^(\d{4,5})(?=[a-z])(.*)$/i);
+    if (!match) return null;
+    const games = [...match[2].matchAll(/[a-z](\d{12})/gi)]
+      .map((game) => normalizeNumbers(game[1].match(/\d{2}/g)?.map(Number) ?? []))
+      .filter((game): game is number[] => game !== null);
+    if (!games.length || games.length > 5) return null;
+    return { round: parseRound(match[1]), numbers: games[0], games };
+  } catch {
+    return null;
+  }
+}
+
 export function parseTicketPayload(rawValue: string): TicketScanResult | null {
   const raw = rawValue.trim();
   if (!raw) return null;
 
+  const officialTicket = parseOfficialTicketUrl(raw);
+  if (officialTicket) return officialTicket;
+
   try {
     const payload = JSON.parse(raw) as { round?: unknown; ltEpsd?: unknown; numbers?: unknown; game?: { numbers?: unknown }; games?: Array<{ numbers?: unknown }> };
-    const numbers = normalizeNumbers(payload.numbers ?? payload.game?.numbers ?? (payload.games?.length === 1 ? payload.games[0]?.numbers : undefined));
-    if (numbers) return { numbers, round: parseRound(payload.round ?? payload.ltEpsd) };
+    const games = payload.games?.map((game) => normalizeNumbers(game.numbers)).filter((game): game is number[] => game !== null);
+    const numbers = normalizeNumbers(payload.numbers ?? payload.game?.numbers ?? games?.[0]);
+    if (numbers) return { numbers, round: parseRound(payload.round ?? payload.ltEpsd), ...(games?.length ? { games } : {}) };
   } catch {
     // QR payloads are often plain text; continue with the strict text formats below.
   }
@@ -54,7 +76,7 @@ export function parseTicketPayload(rawValue: string): TicketScanResult | null {
   return numbers ? { numbers } : null;
 }
 
-export function TicketScanner({ onNumbersDetected }: { onNumbersDetected: (result: TicketScanResult) => void }) {
+export function TicketScanner({ onNumbersDetected, onTicketDetected }: { onNumbersDetected: (result: TicketScanResult) => void; onTicketDetected?: (result: TicketScanResult) => void }) {
   const videoRef = useRef<HTMLVideoElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
   const [active, setActive] = useState(false);
@@ -90,12 +112,19 @@ export function TicketScanner({ onNumbersDetected }: { onNumbersDetected: (resul
     }
     try {
       const detected = await new DetectorClass().detect(canvas);
-      const candidates = detected.map((item) => parseTicketPayload(item.rawValue ?? "")).filter((item): item is TicketScanResult => item !== null);
+      const candidates = [...new Map(detected
+        .map((item) => parseTicketPayload(item.rawValue ?? ""))
+        .filter((item): item is TicketScanResult => item !== null)
+        .map((item) => [`${item.round ?? ""}:${item.games?.map((game) => game.join(",")).join("/") ?? item.numbers.join(",")}`, item]))
+      .values()];
       if (candidates.length === 1) {
         const result = candidates[0];
         onNumbersDetected(result);
+        onTicketDetected?.(result);
         trackEvent("ticket_scan_detected", { source, detectedNumbers: result.numbers.length, detectedRound: result.round ?? "unknown" });
-        setMessage(`번호 ${result.numbers.join(", ")}를 찾았어요. 회차와 번호를 확인한 뒤 결과를 확인해 주세요.`);
+        setMessage(result.games?.length
+          ? `${result.games.length}게임의 번호를 찾았어요. 용지에 없는 번호 추천도 바로 만들 수 있어요.`
+          : `번호 ${result.numbers.join(", ")}를 찾았어요. 회차와 번호를 확인한 뒤 결과를 확인해 주세요.`);
       } else {
         trackEvent("ticket_scan_failed", { source, reason: candidates.length > 1 ? "multiple_games_found" : "supported_payload_not_found" });
         setMessage("지원하는 QR 형식에서 한 게임 번호를 확인하지 못했어요. 사진을 참고해 번호를 직접 선택해 주세요.");
@@ -174,10 +203,10 @@ export function TicketScanner({ onNumbersDetected }: { onNumbersDetected: (resul
   return (
     <section className="ticket-scanner card card-weak">
       <div className="ticket-scanner-head">
-        <div><p className="eyebrow">사진으로 빠르게 시작</p><h2>로또 용지 촬영</h2></div>
+        <div><p className="eyebrow">QR로 빠르게 시작</p><h2>로또 용지 QR 읽기</h2></div>
         <span className="body-small">기기는 저장하지 않아요</span>
       </div>
-      <p className="body-small">용지 사진을 참고해 번호를 자동으로 찾고, 인식 결과는 직접 확인한 뒤 분석 리포트로 이어집니다.</p>
+      <p className="body-small">공식 로또 용지 QR에서 최대 5게임의 번호를 읽어요. 인식 결과는 직접 확인한 뒤 분석과 비중복 추천으로 이어집니다.</p>
       {!active && <div className="row">
         <ProductButton size="medium" loading={starting} onClick={() => void startCamera()}>카메라 열기</ProductButton>
         <label className="product-button product-medium product-weak ticket-upload-label">사진 업로드<input className="sr-only" type="file" accept="image/*" capture="environment" onChange={(event) => { const file = event.currentTarget.files?.[0]; if (file) void uploadImage(file); event.currentTarget.value = ""; }} /></label>

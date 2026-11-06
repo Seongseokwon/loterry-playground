@@ -39,4 +39,18 @@ describe("analyzeTicketNumbers", () => {
     expect(parseTicketPayload("round 1244 game 3 8 14 22 35 41")).toBeNull();
     expect(parseTicketPayload("https://example.test/ticket?id=1244-3-8-14-22-35-41")).toBeNull();
   });
+
+  it("동행복권 QR URL에서 회차와 여러 게임을 읽는다", () => {
+    expect(parseTicketPayload("https://qr.dhlottery.co.kr/?v=1242q081518273342q151722243139q161822253140q020410163141q1216192141441173052688")).toEqual({
+      round: 1242,
+      numbers: [8, 15, 18, 27, 33, 42],
+      games: [
+        [8, 15, 18, 27, 33, 42],
+        [15, 17, 22, 24, 31, 39],
+        [16, 18, 22, 25, 31, 40],
+        [2, 4, 10, 16, 31, 41],
+        [12, 16, 19, 21, 41, 44],
+      ],
+    });
+  });
 });

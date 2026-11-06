@@ -11,6 +11,7 @@ import { saveSavedSet, type SavedSetNumbers } from "@/lib/storage";
 import { trackEvent } from "@/lib/analytics";
 import { analyzeTicketNumbers } from "@/lib/ticket-analysis";
 import { TicketScanner, type TicketScanResult } from "@/components/check/TicketScanner";
+import { TicketFreshPick } from "@/components/check/TicketFreshPick";
 
 export function CheckPanel() {
   const [selected, setSelected] = useState<number[]>([]);
@@ -19,6 +20,7 @@ export function CheckPanel() {
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [scanNeedsConfirmation, setScanNeedsConfirmation] = useState(false);
+  const [scannedGames, setScannedGames] = useState<number[][]>([]);
   const [saveError, setSaveError] = useState("");
   const draw = useMemo(() => lottoDraws.find((item) => item.round === round) ?? lottoDraws[0], [round]);
   const analysis = useMemo(() => analyzeTicketNumbers(selected), [selected]);
@@ -68,7 +70,8 @@ export function CheckPanel() {
         setResult(null);
         setSaved(false);
         setSaveError("");
-      }} />
+      }} onTicketDetected={(scan) => setScannedGames(scan.games ?? [scan.numbers])} />
+      {scannedGames.length > 0 && <TicketFreshPick key={scannedGames.map((game) => game.join(",")).join("/")} games={scannedGames} />}
       <div className="check-layout">
       <section className="card stack">
         <label className="round-select">확인할 회차
