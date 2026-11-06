@@ -26,8 +26,8 @@ export default function DataSourcePage() {
         <section className="card card-weak info-section">
           <h2>관련 기능</h2>
           <div className="status-actions">
-            <Link className="product-button product-primary" href="/results">전체 당첨번호 보기</Link>
-            <Link className="product-button product-weak" href="/stats">번호 통계 보기</Link>
+            <Link className="product-button product-large product-primary" href="/results">전체 당첨번호 보기</Link>
+            <Link className="product-button product-large product-weak" href="/stats">번호 통계 보기</Link>
           </div>
         </section>
       </div>
