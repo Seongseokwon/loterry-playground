@@ -8,6 +8,7 @@ export default function DrawPage() {
   return (
     <div className="page page-narrow">
       <DrawBuilder />
+      <section className="section card card-weak strategy-battle-link"><div><h2>번호 탐험대</h2><p className="body-small">네 가지 모델이 고른 번호와 그 이유를 한눈에 비교해 보세요.</p></div><Link className="product-button product-weak" href="/draw/model-picks">탐험대 만나기</Link></section>
       <section className="section card card-weak strategy-battle-link"><div><h2>패턴 연구실</h2><p className="body-small">구간 패턴과 핫·콜드·궁합수를 비교하고 과거 회차로 실험해 보세요.</p></div><Link className="product-button product-weak" href="/draw/pattern-lab">연구실 열기</Link></section>
       <section className="section content-guide">
         <h2>로또 번호 추첨 이용 안내</h2>
