@@ -39,7 +39,7 @@ export function AppHeader() {
         </nav>
       </div>
       <nav className="mobile-nav" aria-label="모바일 주요 메뉴">
-        {navItems.map((item) => (
+        {navItems.filter((item) => item.href !== "/archive").map((item) => (
           <Link
             key={item.href}
             href={item.href}

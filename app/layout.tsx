@@ -3,6 +3,7 @@ import "./globals.css";
 import "../styles/components.css";
 import "../styles/pages.css";
 import "../styles/dashboard.css";
+import "../styles/experience.css";
 import { AppFooter, AppHeader } from "@/components/SiteChrome";
 import { GoogleAnalytics } from "@/components/analytics/GoogleAnalytics";
 
@@ -27,8 +28,9 @@ export default function RootLayout({
     <html lang="ko">
       <body>
         <GoogleAnalytics measurementId={process.env.NEXT_PUBLIC_GA_MEASUREMENT_ID} />
+        <a className="skip-link" href="#main-content">본문으로 건너뛰기</a>
         <AppHeader />
-        <main className="site-main">{children}</main>
+        <main id="main-content" className="site-main" tabIndex={-1}>{children}</main>
         <AppFooter />
       </body>
     </html>
