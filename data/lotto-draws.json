@@ -1,5 +1,21 @@
 [
   {
+    "round": 1250,
+    "date": "2026-11-14",
+    "numbers": [
+      1,
+      5,
+      18,
+      23,
+      27,
+      28
+    ],
+    "bonus": 8,
+    "totalSell": 116731227000,
+    "firstWinAmount": 3103164459,
+    "firstWinners": 9
+  },
+  {
     "round": 1249,
     "date": "2026-11-07",
     "numbers": [
